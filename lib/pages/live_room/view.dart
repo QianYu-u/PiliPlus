@@ -266,6 +266,7 @@ class _LiveRoomPageState extends State<LiveRoomPage>
                     plPlayerController: plPlayerController,
                     isFullScreen: isFullScreen,
                     isPipMode: plPlayerController.isDesktopPip || isPipMode,
+                    size: Size(width, height),
                   ),
           );
         }
@@ -977,6 +978,7 @@ class LiveDanmaku extends StatefulWidget {
   final PlPlayerController plPlayerController;
   final bool isPipMode;
   final bool isFullScreen;
+  final Size size;
 
   const LiveDanmaku({
     super.key,
@@ -984,6 +986,7 @@ class LiveDanmaku extends StatefulWidget {
     required this.plPlayerController,
     this.isPipMode = false,
     required this.isFullScreen,
+    required this.size,
   });
 
   @override
@@ -1021,6 +1024,7 @@ class _LiveDanmakuState extends State<LiveDanmaku> {
                   plPlayerController.danmakuController = e;
             },
             option: DanmakuOptions.get(notFullscreen: widget.notFullscreen),
+            size: widget.size,
           ),
         );
       },
