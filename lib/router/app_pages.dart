@@ -68,6 +68,7 @@ import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
 import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
+import 'package:PiliPlus/pages/setting/pages/ai_setting.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
@@ -190,5 +191,6 @@ class Routes {
     GetPage(name: '/sameFollowing', page: () => const FollowSamePage()),
     GetPage(name: '/download', page: () => const DownloadPage()),
     GetPage(name: '/dlna', page: () => const DLNAPage()),
+    GetPage(name: '/aiSetting', page: () => const AiSettingPage()),
   ];
 }

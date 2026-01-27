@@ -182,6 +182,13 @@ abstract final class SettingBoxKey {
       blockServer = 'blockServer',
       blockTrack = 'blockTrack';
 
+  // AI 视频助手
+  static const String aiApiUrl = 'aiApiUrl',
+      aiApiKey = 'aiApiKey',
+      aiModelName = 'aiModelName',
+      aiPrompts = 'aiPrompts',
+      aiCachedModels = 'aiCachedModels';
+
   static const String enableShowDanmaku = 'enableShowDanmaku',
       enableShowLiveDanmaku = 'enableShowLiveDanmaku',
       pipNoDanmaku = 'pipNoDanmaku',

@@ -426,7 +426,7 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.cdnSpeedTest, defaultValue: true);
 
   static bool get autoUpdate =>
-      _setting.get(SettingBoxKey.autoUpdate, defaultValue: true);
+      _setting.get(SettingBoxKey.autoUpdate, defaultValue: false);
 
   static bool get horizontalPreview =>
       _setting.get(SettingBoxKey.horizontalPreview, defaultValue: false);

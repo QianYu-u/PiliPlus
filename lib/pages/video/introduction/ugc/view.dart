@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/pages/video/ai_assistant/view.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/gesture/tap_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -602,6 +603,18 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
             text: !isLoading
                 ? NumUtils.numFormat(videoDetail.stat!.share!)
                 : null,
+          ),
+          ActionItem(
+            icon: const Icon(Icons.auto_awesome),
+            onTap: () => AiAssistantPanel.show(
+              context: context,
+              bvid: introController.bvid,
+              cid: videoDetailCtr.cid.value,
+              heroTag: widget.heroTag,
+            ),
+            selectStatus: false,
+            semanticsLabel: 'AI助手',
+            text: 'AI',
           ),
         ],
       ),
