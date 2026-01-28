@@ -1,100 +1,101 @@
 import 'package:PiliPlus/pages/video/ai_assistant/controller.dart';
 import 'package:PiliPlus/services/ai_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:markdown/markdown.dart' as m;
+import 'package:markdown_widget/markdown_widget.dart';
 
-/// Markdown 转 HTML 简易工具
-String _markdownToHtml(String markdown) {
-  String html = markdown;
+/// LaTeX 语法解析器
+class LatexSyntax extends m.InlineSyntax {
+  LatexSyntax() : super(r'(\$\$[\s\S]+?\$\$)|(\$[^\$\n]+?\$)');
 
-  // 转义 HTML 特殊字符（但保留我们要处理的标记）
-  // 暂不转义，避免破坏 LaTeX
+  @override
+  bool onMatch(m.InlineParser parser, Match match) {
+    final input = match.input;
+    final matchValue = input.substring(match.start, match.end);
+    String content = '';
+    bool isInline = true;
+    const blockSyntax = r'$$';
+    const inlineSyntax = r'$';
+    
+    if (matchValue.startsWith(blockSyntax) &&
+        matchValue.endsWith(blockSyntax) &&
+        matchValue.length > 4) {
+      content = matchValue.substring(2, matchValue.length - 2);
+      isInline = false;
+    } else if (matchValue.startsWith(inlineSyntax) &&
+        matchValue.endsWith(inlineSyntax) &&
+        matchValue.length > 2) {
+      content = matchValue.substring(1, matchValue.length - 1);
+    }
+    
+    m.Element el = m.Element.text('latex', matchValue);
+    el.attributes['content'] = content;
+    el.attributes['isInline'] = '$isInline';
+    parser.addNode(el);
+    return true;
+  }
+}
 
-  // 处理代码块
-  html = html.replaceAllMapped(
-    RegExp(r'```(\w*)\n([\s\S]*?)```', multiLine: true),
-    (match) {
-      final lang = match.group(1) ?? '';
-      final code = match.group(2) ?? '';
-      return '<pre><code class="language-$lang">$code</code></pre>';
-    },
-  );
+/// LaTeX 节点生成器
+SpanNodeGeneratorWithTag latexGenerator(bool isDark) => SpanNodeGeneratorWithTag(
+  tag: 'latex',
+  generator: (e, config, visitor) => LatexNode(
+    e.attributes,
+    e.textContent,
+    config,
+    isDark,
+  ),
+);
 
-  // 处理行内代码
-  html = html.replaceAllMapped(
-    RegExp(r'`([^`]+)`'),
-    (match) => '<code>${match.group(1)}</code>',
-  );
+/// LaTeX 渲染节点
+class LatexNode extends SpanNode {
+  final Map<String, String> attributes;
+  final String textContent;
+  final MarkdownConfig config;
+  final bool isDark;
 
-  // 处理标题
-  html = html.replaceAllMapped(
-    RegExp(r'^#{6}\s+(.+)$', multiLine: true),
-    (match) => '<h6>${match.group(1)}</h6>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'^#{5}\s+(.+)$', multiLine: true),
-    (match) => '<h5>${match.group(1)}</h5>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'^#{4}\s+(.+)$', multiLine: true),
-    (match) => '<h4>${match.group(1)}</h4>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'^#{3}\s+(.+)$', multiLine: true),
-    (match) => '<h3>${match.group(1)}</h3>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'^#{2}\s+(.+)$', multiLine: true),
-    (match) => '<h2>${match.group(1)}</h2>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'^#\s+(.+)$', multiLine: true),
-    (match) => '<h1>${match.group(1)}</h1>',
-  );
+  LatexNode(this.attributes, this.textContent, this.config, this.isDark);
 
-  // 处理粗体 **text** 或 __text__
-  html = html.replaceAllMapped(
-    RegExp(r'\*\*(.+?)\*\*'),
-    (match) => '<strong>${match.group(1)}</strong>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'__(.+?)__'),
-    (match) => '<strong>${match.group(1)}</strong>',
-  );
-
-  // 处理斜体 *text* 或 _text_
-  html = html.replaceAllMapped(
-    RegExp(r'\*([^*]+)\*'),
-    (match) => '<em>${match.group(1)}</em>',
-  );
-  html = html.replaceAllMapped(
-    RegExp(r'_([^_]+)_'),
-    (match) => '<em>${match.group(1)}</em>',
-  );
-
-  // 处理无序列表
-  html = html.replaceAllMapped(
-    RegExp(r'^[-*+]\s+(.+)$', multiLine: true),
-    (match) => '<li>${match.group(1)}</li>',
-  );
-
-  // 处理有序列表
-  html = html.replaceAllMapped(
-    RegExp(r'^\d+\.\s+(.+)$', multiLine: true),
-    (match) => '<li>${match.group(1)}</li>',
-  );
-
-  // 处理换行
-  html = html.replaceAll('\n\n', '</p><p>');
-  html = '<p>$html</p>';
-
-  // 清理多余的空段落
-  html = html.replaceAll('<p></p>', '');
-  html = html.replaceAll('<p>\n</p>', '');
-
-  return html;
+  @override
+  InlineSpan build() {
+    final content = attributes['content'] ?? '';
+    final isInline = attributes['isInline'] == 'true';
+    final style = parentStyle ?? config.p.textStyle;
+    
+    if (content.isEmpty) {
+      return TextSpan(style: style, text: textContent);
+    }
+    
+    final latex = Math.tex(
+      content,
+      mathStyle: MathStyle.text,
+      textStyle: style.copyWith(
+        color: isDark ? Colors.white : Colors.black,
+      ),
+      textScaleFactor: 1,
+      onErrorFallback: (error) {
+        return Text(
+          textContent,
+          style: style.copyWith(color: Colors.red),
+        );
+      },
+    );
+    
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: isInline
+          ? latex
+          : Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: latex),
+            ),
+    );
+  }
 }
 
 /// AI 视频助手面板
@@ -178,7 +179,6 @@ class AiAssistantPanel extends StatefulWidget {
 
 class _AiAssistantPanelState extends State<AiAssistantPanel> {
   final TextEditingController _inputController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
 
   late final AiAssistantController _controller;
   AiService get _aiService => AiService.to;
@@ -193,7 +193,6 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
   @override
   void dispose() {
     _inputController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -213,10 +212,148 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
     _controller.sendPrompt(text);
   }
 
+  void _copyToClipboard() {
+    final text = _controller.aiResponse.value;
+    if (text.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text));
+    SmartDialog.showToast('已复制到剪贴板');
+  }
+
+  /// 构建 Markdown 配置
+  MarkdownConfig _buildMarkdownConfig(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyMedium?.color ?? Colors.black;
+    
+    return MarkdownConfig(
+      configs: [
+        // 段落样式
+        PConfig(
+          textStyle: TextStyle(
+            fontSize: 15,
+            height: 1.6,
+            color: textColor,
+          ),
+        ),
+        // 标题样式
+        H1Config(
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.5,
+          ),
+        ),
+        H2Config(
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.5,
+          ),
+        ),
+        H3Config(
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.4,
+          ),
+        ),
+        // 引用样式
+        BlockquoteConfig(
+          sideColor: theme.colorScheme.primary,
+          textColor: textColor.withValues(alpha: 0.8),
+        ),
+        // 代码块样式
+        PreConfig(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 13,
+            color: textColor,
+          ),
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+        ),
+        // 行内代码样式
+        CodeConfig(
+          style: TextStyle(
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        // 链接样式
+        LinkConfig(
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+        // 列表样式
+        ListConfig(
+          marker: (isOrdered, depth, index) {
+            if (isOrdered) {
+              return Text(
+                '${index + 1}.',
+                style: TextStyle(color: textColor),
+              );
+            }
+            return Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.only(top: 8, right: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+            );
+          },
+        ),
+        // 分割线样式
+        HrConfig(
+          color: theme.colorScheme.outlineVariant,
+          height: 1,
+        ),
+        // 表格样式
+        TableConfig(
+          headerRowDecoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+          ),
+          bodyRowDecoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outlineVariant,
+                width: 0.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建 Markdown Generator
+  MarkdownGenerator _buildMarkdownGenerator(bool isDark) {
+    return MarkdownGenerator(
+      generators: [
+        latexGenerator(isDark),
+      ],
+      inlineSyntaxList: [
+        LatexSyntax(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final prompts = _aiService.prompts;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       children: [
@@ -383,54 +520,41 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
               );
             }
 
-            // AI 响应 - 使用 Markdown 渲染
+            // AI 响应 - 使用 markdown_widget 渲染
             if (_controller.aiResponse.value.isNotEmpty) {
-              return SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SelectionArea(
-                  child: Html(
-                    data: _markdownToHtml(_controller.aiResponse.value),
-                    style: {
-                      'html': Style(
-                        fontSize: FontSize(15),
-                        lineHeight: LineHeight.percent(160),
-                      ),
-                      'body': Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                      ),
-                      'p': Style(
-                        margin: Margins.only(bottom: 8),
-                      ),
-                      'h1,h2': Style(
-                        fontSize: FontSize(18),
-                        fontWeight: FontWeight.bold,
-                        margin: Margins.only(top: 12, bottom: 8),
-                      ),
-                      'h3,h4,h5,h6': Style(
-                        fontSize: FontSize(16),
-                        fontWeight: FontWeight.bold,
-                        margin: Margins.only(top: 8, bottom: 4),
-                      ),
-                      'li': Style(
-                        padding: HtmlPaddings.only(bottom: 4),
-                      ),
-                      'code': Style(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        padding: HtmlPaddings.symmetric(horizontal: 4, vertical: 2),
-                        fontFamily: 'monospace',
-                      ),
-                      'pre': Style(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        padding: HtmlPaddings.all(12),
-                        margin: Margins.only(top: 8, bottom: 8),
-                      ),
-                      'strong': Style(fontWeight: FontWeight.bold),
-                      'em': Style(fontStyle: FontStyle.italic),
-                    },
+              return Stack(
+                children: [
+                  MarkdownWidget(
+                    data: _controller.aiResponse.value,
+                    shrinkWrap: false,
+                    selectable: true,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 56),
+                    config: _buildMarkdownConfig(context),
+                    markdownGenerator: _buildMarkdownGenerator(isDark),
                   ),
-                ),
+                  // 复制按钮
+                  Positioned(
+                    right: 16,
+                    bottom: 8,
+                    child: Material(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      elevation: 2,
+                      child: InkWell(
+                        onTap: _copyToClipboard,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(
+                            Icons.copy,
+                            size: 20,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
