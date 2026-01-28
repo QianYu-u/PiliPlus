@@ -87,13 +87,18 @@ jobs:
             - name: Write key
               if: github.event_name == 'workflow_dispatch'
               run: |
-                  if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
-                    echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
+                  if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+                    echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
+                    
                     echo storeFile='key.jks' >> android/key.properties
-                    echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
-                    echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
-                    echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                    
+                    echo storePassword='${{ secrets.ANDROID_STORE_PASSWORD }}' >> android/key.properties
+                    
+                    echo keyAlias='${{ secrets.ANDROID_KEY_ALIAS }}' >> android/key.properties
+                    
+                    echo keyPassword='${{ secrets.ANDROID_KEY_PASSWORD }}' >> android/key.properties
                   fi
+
 
             - name: Set and Extract version
               shell: pwsh
