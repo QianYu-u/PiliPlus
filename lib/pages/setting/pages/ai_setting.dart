@@ -19,9 +19,17 @@ class _AiSettingPageState extends State<AiSettingPage> {
   final RxList<String> _models = <String>[].obs;
   final RxString _selectedModel = ''.obs;
   final RxBool _isLoadingModels = false.obs;
-  final RxList<AiPrompt> _prompts = <AiPrompt>[].obs;
+  
+  // 视频和专栏预设提示词分开管理
+  final RxList<AiPrompt> _videoPrompts = <AiPrompt>[].obs;
+  final RxList<AiPrompt> _opusPrompts = <AiPrompt>[].obs;
+  final Rx<AiSceneType> _selectedPromptsType = AiSceneType.video.obs;
 
   AiService get _aiService => AiService.to;
+  
+  // 获取当前选中类型的提示词列表
+  RxList<AiPrompt> get _currentPrompts => 
+      _selectedPromptsType.value == AiSceneType.video ? _videoPrompts : _opusPrompts;
 
   @override
   void initState() {
@@ -29,7 +37,8 @@ class _AiSettingPageState extends State<AiSettingPage> {
     _urlController = TextEditingController(text: _aiService.apiUrl);
     _keyController = TextEditingController(text: _aiService.apiKey);
     _selectedModel.value = _aiService.modelName;
-    _prompts.value = List.from(_aiService.prompts);
+    _videoPrompts.value = List.from(_aiService.videoPrompts);
+    _opusPrompts.value = List.from(_aiService.opusPrompts);
     // 加载缓存的模型列表
     _models.value = _aiService.cachedModels;
   }
@@ -66,7 +75,8 @@ class _AiSettingPageState extends State<AiSettingPage> {
     _aiService.apiUrl = _urlController.text.trim();
     _aiService.apiKey = _keyController.text.trim();
     _aiService.modelName = _selectedModel.value;
-    _aiService.prompts = _prompts.toList();
+    _aiService.videoPrompts = _videoPrompts.toList();
+    _aiService.opusPrompts = _opusPrompts.toList();
     SmartDialog.showToast('保存成功');
   }
 
@@ -114,8 +124,8 @@ class _AiSettingPageState extends State<AiSettingPage> {
                 SmartDialog.showToast('标题和内容不能为空');
                 return;
               }
-              _prompts.add(AiPrompt(title: title, content: content));
-              _aiService.prompts = _prompts.toList();
+              _currentPrompts.add(AiPrompt(title: title, content: content));
+              _saveCurrentPrompts();
               Navigator.pop(context);
             },
             child: const Text('添加'),
@@ -126,12 +136,17 @@ class _AiSettingPageState extends State<AiSettingPage> {
   }
 
   void _removePrompt(int index) {
-    _prompts.removeAt(index);
-    _aiService.prompts = _prompts.toList();
+    _currentPrompts.removeAt(index);
+    _saveCurrentPrompts();
+  }
+
+  /// 保存当前选中类型的提示词到存储
+  void _saveCurrentPrompts() {
+    _aiService.setPrompts(_selectedPromptsType.value, _currentPrompts.toList());
   }
 
   void _editPrompt(int index) {
-    final prompt = _prompts[index];
+    final prompt = _currentPrompts[index];
     final titleController = TextEditingController(text: prompt.title);
     final contentController = TextEditingController(text: prompt.content);
 
@@ -173,8 +188,8 @@ class _AiSettingPageState extends State<AiSettingPage> {
                 SmartDialog.showToast('标题和内容不能为空');
                 return;
               }
-              _prompts[index] = AiPrompt(title: title, content: content);
-              _aiService.prompts = _prompts.toList();
+              _currentPrompts[index] = AiPrompt(title: title, content: content);
+              _saveCurrentPrompts();
               Navigator.pop(context);
             },
             child: const Text('保存'),
@@ -283,19 +298,43 @@ class _AiSettingPageState extends State<AiSettingPage> {
             ],
           ),
           const SizedBox(height: 12),
+          
+          // 视频/专栏切换
+          Obx(
+            () => SegmentedButton<AiSceneType>(
+              segments: const [
+                ButtonSegment(
+                  value: AiSceneType.video,
+                  label: Text('视频预设'),
+                  icon: Icon(Icons.video_library_outlined),
+                ),
+                ButtonSegment(
+                  value: AiSceneType.opus,
+                  label: Text('专栏预设'),
+                  icon: Icon(Icons.article_outlined),
+                ),
+              ],
+              selected: {_selectedPromptsType.value},
+              onSelectionChanged: (Set<AiSceneType> selection) {
+                _selectedPromptsType.value = selection.first;
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          
           Obx(
             () => ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _prompts.length,
+              itemCount: _currentPrompts.length,
               onReorder: (oldIndex, newIndex) {
                 if (newIndex > oldIndex) newIndex--;
-                final item = _prompts.removeAt(oldIndex);
-                _prompts.insert(newIndex, item);
-                _aiService.prompts = _prompts.toList();
+                final item = _currentPrompts.removeAt(oldIndex);
+                _currentPrompts.insert(newIndex, item);
+                _saveCurrentPrompts();
               },
               itemBuilder: (context, index) {
-                final prompt = _prompts[index];
+                final prompt = _currentPrompts[index];
                 return Card(
                   key: ValueKey('${prompt.title}_$index'),
                   child: ListTile(

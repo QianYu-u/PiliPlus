@@ -24,6 +24,7 @@ import 'package:PiliPlus/pages/dynamics_repost/view.dart';
 import 'package:PiliPlus/pages/video/pay_coins/view.dart';
 import 'package:PiliPlus/pages/video/related/controller.dart';
 import 'package:PiliPlus/pages/video/reply/controller.dart';
+import 'package:PiliPlus/pages/video/ai_assistant/controller.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -538,6 +539,13 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
 
       this.cid.value = cid;
       queryOnlineTotal();
+
+      // 重置 AI 助手状态
+      final aiTag = 'ai_$heroTag';
+      if (Get.isRegistered<AiAssistantController>(tag: aiTag)) {
+        Get.find<AiAssistantController>(tag: aiTag).updateCid(cid);
+      }
+
       return true;
     } catch (e) {
       if (kDebugMode) debugPrint('ugc onChangeEpisode: $e');

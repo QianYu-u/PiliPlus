@@ -102,16 +102,18 @@ class LatexNode extends SpanNode {
 class AiAssistantPanel extends StatefulWidget {
   const AiAssistantPanel({
     super.key,
-    required this.bvid,
-    required this.cid,
+    this.bvid,
+    this.cid,
     required this.heroTag,
+    this.sceneType = AiSceneType.video,
   });
 
-  final String bvid;
-  final int cid;
+  final String? bvid;
+  final int? cid;
   final String heroTag;
+  final AiSceneType sceneType;
 
-  /// 显示 AI 助手面板
+  /// 显示 AI 助手面板（视频模式）
   static void show({
     required BuildContext context,
     required String bvid,
@@ -138,7 +140,11 @@ class AiAssistantPanel extends StatefulWidget {
     final tag = 'ai_$heroTag';
     if (!Get.isRegistered<AiAssistantController>(tag: tag)) {
       Get.put(
-        AiAssistantController(bvid: bvid, cid: cid),
+        AiAssistantController(
+          bvid: bvid,
+          cid: cid,
+          sceneType: AiSceneType.video,
+        ),
         tag: tag,
       );
     }
@@ -165,13 +171,80 @@ class AiAssistantPanel extends StatefulWidget {
     );
   }
 
+  /// 显示 AI 助手面板（专栏模式）
+  static void showForOpus({
+    required BuildContext context,
+    required String heroTag,
+    required String title,
+    required String content,
+  }) {
+    final aiService = AiService.to;
+
+    // 检查配置
+    if (!aiService.isConfigured) {
+      SmartDialog.showToast('请先在设置中配置 AI API');
+      Get.toNamed('/aiSetting');
+      return;
+    }
+
+    // 检查是否有提示词
+    if (aiService.prompts.isEmpty) {
+      SmartDialog.showToast('请先添加预设提示词');
+      Get.toNamed('/aiSetting');
+      return;
+    }
+
+    // 截断超长内容
+    String processedContent = content;
+    if (content.length > 5000) {
+      processedContent = '${content.substring(0, 5000)}...（内容已截断）';
+    }
+
+    // 获取或创建控制器
+    final tag = 'ai_opus_$heroTag';
+    if (!Get.isRegistered<AiAssistantController>(tag: tag)) {
+      Get.put(
+        AiAssistantController(
+          sceneType: AiSceneType.opus,
+          directContent: '文章标题：$title\n\n$processedContent',
+        ),
+        tag: tag,
+      );
+    }
+
+    // 显示底部抽屉
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => AiAssistantPanel(
+          heroTag: heroTag,
+          sceneType: AiSceneType.opus,
+        ),
+      ),
+    );
+  }
+
   /// 销毁控制器（在视频页面关闭时调用）
   static void dispose(String heroTag) {
     final tag = 'ai_$heroTag';
     if (Get.isRegistered<AiAssistantController>(tag: tag)) {
       Get.delete<AiAssistantController>(tag: tag);
     }
+    final opusTag = 'ai_opus_$heroTag';
+    if (Get.isRegistered<AiAssistantController>(tag: opusTag)) {
+      Get.delete<AiAssistantController>(tag: opusTag);
+    }
   }
+
 
   @override
   State<AiAssistantPanel> createState() => _AiAssistantPanelState();
@@ -186,7 +259,9 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
   @override
   void initState() {
     super.initState();
-    final tag = 'ai_${widget.heroTag}';
+    final tag = widget.sceneType == AiSceneType.opus
+        ? 'ai_opus_${widget.heroTag}'
+        : 'ai_${widget.heroTag}';
     _controller = Get.find<AiAssistantController>(tag: tag);
   }
 
@@ -197,7 +272,7 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
   }
 
   void _sendSelectedPrompt() {
-    final prompts = _aiService.prompts;
+    final prompts = _aiService.getPrompts(widget.sceneType);
     if (prompts.isEmpty) return;
     final index = _controller.selectedPromptIndex.value;
     if (index >= 0 && index < prompts.length) {
@@ -352,7 +427,7 @@ class _AiAssistantPanelState extends State<AiAssistantPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final prompts = _aiService.prompts;
+    final prompts = _aiService.getPrompts(widget.sceneType);
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(

@@ -188,7 +188,10 @@ abstract final class SettingBoxKey {
       aiApiKey = 'aiApiKey',
       aiModelName = 'aiModelName',
       aiPrompts = 'aiPrompts',
-      aiCachedModels = 'aiCachedModels';
+      aiCachedModels = 'aiCachedModels',
+      aiSystemPromptVideo = 'aiSystemPromptVideo',
+      aiSystemPromptOpus = 'aiSystemPromptOpus',
+      aiPromptsOpus = 'aiPromptsOpus';
 
   static const String enableShowDanmaku = 'enableShowDanmaku',
       enableShowLiveDanmaku = 'enableShowLiveDanmaku',

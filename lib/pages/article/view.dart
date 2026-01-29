@@ -29,6 +29,8 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:html/parser.dart' as parser;
+import 'package:PiliPlus/pages/video/ai_assistant/view.dart';
+import 'package:PiliPlus/utils/html_utils.dart';
 
 class ArticlePage extends StatefulWidget {
   const ArticlePage({super.key});
@@ -58,6 +60,57 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
             scrollController.positions.last.pixels >= 45;
       }
     });
+  }
+
+  /// 提取文章内容并显示 AI 助手
+  void _showAiAssistant(BuildContext context) {
+    String content = '';
+    
+    // 从 articleData 提取 HTML 内容
+    if (controller.articleData?.content != null) {
+      content = stripHtml(controller.articleData!.content!);
+    }
+    // 从 opus 提取纯文本内容
+    else if (controller.opus != null && controller.opus!.isNotEmpty) {
+      final buffer = StringBuffer();
+      for (final item in controller.opus!) {
+        // 从 text.nodes 提取文本
+        final nodes = item.text?.nodes;
+        if (nodes != null) {
+          for (final node in nodes) {
+            if (node.word?.words != null) {
+              buffer.write(node.word!.words);
+            } else if (node.rich?.text != null) {
+              buffer.write(node.rich!.text);
+            }
+          }
+          buffer.write('\n');
+        }
+        // 从 heading.nodes 提取标题
+        final headingNodes = item.heading?.nodes;
+        if (headingNodes != null) {
+          for (final node in headingNodes) {
+            if (node.word?.words != null) {
+              buffer.write(node.word!.words);
+            }
+          }
+          buffer.write('\n');
+        }
+      }
+      content = buffer.toString().trim();
+    }
+    
+    if (content.isEmpty) {
+      SmartDialog.showToast('无法提取文章内容');
+      return;
+    }
+    
+    AiAssistantPanel.showForOpus(
+      context: context,
+      heroTag: 'article_${controller.id}',
+      title: controller.summary.title ?? '',
+      content: content,
+    );
   }
 
   @override
@@ -635,10 +688,10 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                       ),
                       Expanded(
                         child: textIconButton(
-                          text: '分享',
-                          icon: CustomIcons.share_node,
+                          text: 'AI',
+                          icon: Icons.auto_awesome,
                           stat: null,
-                          onPressed: () => Utils.shareText(controller.url),
+                          onPressed: () => _showAiAssistant(context),
                         ),
                       ),
                       Expanded(
