@@ -242,6 +242,7 @@ dependencies:
   http2: any
   screen_retriever: any
   characters: any
+  markdown: ^7.3.0
 
 dependency_overrides:
   # screen_brightness: ^2.1.
