@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show exit, Platform;
 import 'dart:math' as math;
 
 import 'package:PiliPlus/pages/common/common_intro_controller.dart';
@@ -22,6 +23,7 @@ class PlayerFocus extends StatelessWidget {
     required this.onSendDanmaku,
     this.canPlay,
     this.onSkipSegment,
+    this.onRefresh,
   });
 
   final Widget child;
@@ -30,6 +32,7 @@ class PlayerFocus extends StatelessWidget {
   final VoidCallback onSendDanmaku;
   final ValueGetter<bool>? canPlay;
   final ValueGetter<bool>? onSkipSegment;
+  final VoidCallback? onRefresh;
 
   static bool _shouldHandle(LogicalKeyboardKey logicalKey) {
     return logicalKey == LogicalKeyboardKey.tab ||
@@ -70,17 +73,15 @@ class PlayerFocus extends StatelessWidget {
   void _updateVolume(KeyEvent event, {required bool isIncrease}) {
     if (event is KeyDownEvent) {
       if (hasPlayer) {
+        _setVolume(isIncrease: isIncrease);
         plPlayerController
-          ..cancelLongPressTimer()
-          ..longPressTimer ??= Timer.periodic(
+          ..longPressTimer?.cancel()
+          ..longPressTimer = Timer.periodic(
             const Duration(milliseconds: 150),
             (_) => _setVolume(isIncrease: isIncrease),
           );
       }
     } else if (event is KeyUpEvent) {
-      if (plPlayerController.longPressTimer?.tick == 0 && hasPlayer) {
-        _setVolume(isIncrease: isIncrease);
-      }
       plPlayerController.cancelLongPressTimer();
     }
   }
@@ -91,14 +92,19 @@ class PlayerFocus extends StatelessWidget {
     final isKeyQ = key == LogicalKeyboardKey.keyQ;
     if (isKeyQ || key == LogicalKeyboardKey.keyR) {
       if (HardwareKeyboard.instance.isMetaPressed) {
+        if (isKeyQ && Platform.isMacOS) {
+          exit(0);
+        }
         return true;
       }
-      if (!plPlayerController.isLive) {
-        if (event is KeyDownEvent) {
+      if (event is KeyDownEvent) {
+        if (plPlayerController.isLive) {
+          onRefresh?.call();
+        } else {
           introController!.onStartTriple();
-        } else if (event is KeyUpEvent) {
-          introController!.onCancelTriple(isKeyQ);
         }
+      } else if (event is KeyUpEvent && !plPlayerController.isLive) {
+        introController!.onCancelTriple(isKeyQ);
       }
       return true;
     }
@@ -114,8 +120,8 @@ class PlayerFocus extends StatelessWidget {
         if (event is KeyDownEvent) {
           if (hasPlayer && !plPlayerController.longPressStatus.value) {
             plPlayerController
-              ..cancelLongPressTimer()
-              ..longPressTimer ??= Timer(
+              ..longPressTimer?.cancel()
+              ..longPressTimer = Timer(
                 const Duration(milliseconds: 200),
                 () => plPlayerController
                   ..cancelLongPressTimer()

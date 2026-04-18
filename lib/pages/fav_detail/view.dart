@@ -1,14 +1,17 @@
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
+import 'package:PiliPlus/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/fav.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/fav_order_type.dart';
-import 'package:PiliPlus/models_new/fav/fav_detail/data.dart';
 import 'package:PiliPlus/models_new/fav/fav_detail/media.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
+import 'package:PiliPlus/pages/common/fab_mixin.dart'
+    show NoRightMarginFabLocation;
 import 'package:PiliPlus/pages/dynamics_repost/view.dart';
 import 'package:PiliPlus/pages/fav_detail/controller.dart';
 import 'package:PiliPlus/pages/fav_detail/widget/fav_video_card.dart';
@@ -28,16 +31,17 @@ class FavDetailPage extends StatefulWidget {
 }
 
 class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
-  late final FavDetailController _favDetailController = Get.put(
-    FavDetailController(),
-    tag: Utils.makeHeroTag(mediaId),
-  );
+  late final FavDetailController _favDetailController;
   late String mediaId;
 
   @override
   void initState() {
     super.initState();
     mediaId = Get.parameters['mediaId']!;
+    _favDetailController = Get.put(
+      FavDetailController(),
+      tag: Utils.makeHeroTag(mediaId),
+    );
   }
 
   late EdgeInsets padding;
@@ -49,7 +53,7 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
     return Obx(
       () {
         final enableMultiSelect = _favDetailController.enableMultiSelect.value;
-        return PopScope(
+        return popScope(
           canPop: !enableMultiSelect,
           onPopInvokedWithResult: (didPop, result) {
             if (enableMultiSelect) {
@@ -58,7 +62,7 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
           },
           child: Scaffold(
             resizeToAvoidBottomInset: false,
-            floatingActionButtonLocation: const CustomFabLocation(),
+            floatingActionButtonLocation: const NoRightMarginFabLocation(),
             floatingActionButton: Padding(
               padding: const EdgeInsets.only(
                 right: kFloatingActionButtonMargin,
@@ -97,7 +101,7 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
             ),
             body: refreshIndicator(
               onRefresh: _favDetailController.onRefresh,
-              child: CustomScrollView(
+              child: customScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 controller: _favDetailController.scrollController,
                 slivers: [
@@ -277,7 +281,7 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
                 PopupMenuItem(
                   onTap: () => showConfirmDialog(
                     context: context,
-                    title: '确定删除该收藏夹?',
+                    title: const Text('确定删除该收藏夹?'),
                     onConfirm: () =>
                         FavHttp.deleteFolder(mediaIds: mediaId).then((res) {
                           if (res.isSuccess) {
@@ -304,64 +308,48 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
     ];
   }
 
-  List<Widget> _selectActions(ThemeData theme) => [
-    TextButton(
-      style: TextButton.styleFrom(
-        visualDensity: VisualDensity.compact,
+  List<Widget> _selectActions(ThemeData theme) {
+    final btnStyle = TextButton.styleFrom(visualDensity: .compact);
+    final textStyle = TextStyle(color: theme.colorScheme.onSurfaceVariant);
+    return [
+      TextButton(
+        style: btnStyle,
+        onPressed: () => _favDetailController.handleSelect(checked: true),
+        child: const Text('全选'),
       ),
-      onPressed: () => _favDetailController.handleSelect(checked: true),
-      child: const Text('全选'),
-    ),
-    TextButton(
-      style: TextButton.styleFrom(
-        visualDensity: VisualDensity.compact,
+      TextButton(
+        style: btnStyle,
+        onPressed: () => RequestUtils.onCopyOrMove<FavDetailItemModel>(
+          context: context,
+          isCopy: true,
+          ctr: _favDetailController,
+          mediaId: _favDetailController.mediaId,
+          mid: _favDetailController.account.mid,
+        ),
+        child: Text('复制', style: textStyle),
       ),
-      onPressed: () =>
-          RequestUtils.onCopyOrMove<FavDetailData, FavDetailItemModel>(
-            context: context,
-            isCopy: true,
-            ctr: _favDetailController,
-            mediaId: _favDetailController.mediaId,
-            mid: _favDetailController.account.mid,
-          ),
-      child: Text(
-        '复制',
-        style: TextStyle(
-          color: theme.colorScheme.onSurfaceVariant,
+      TextButton(
+        style: btnStyle,
+        onPressed: () => RequestUtils.onCopyOrMove<FavDetailItemModel>(
+          context: context,
+          isCopy: false,
+          ctr: _favDetailController,
+          mediaId: _favDetailController.mediaId,
+          mid: _favDetailController.account.mid,
+        ),
+        child: Text('移动', style: textStyle),
+      ),
+      TextButton(
+        style: btnStyle,
+        onPressed: _favDetailController.onRemove,
+        child: Text(
+          '删除',
+          style: TextStyle(color: theme.colorScheme.error),
         ),
       ),
-    ),
-    TextButton(
-      style: TextButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-      ),
-      onPressed: () =>
-          RequestUtils.onCopyOrMove<FavDetailData, FavDetailItemModel>(
-            context: context,
-            isCopy: false,
-            ctr: _favDetailController,
-            mediaId: _favDetailController.mediaId,
-            mid: _favDetailController.account.mid,
-          ),
-      child: Text(
-        '移动',
-        style: TextStyle(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-    ),
-    TextButton(
-      style: TextButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-      ),
-      onPressed: _favDetailController.onRemove,
-      child: Text(
-        '删除',
-        style: TextStyle(color: theme.colorScheme.error),
-      ),
-    ),
-    const SizedBox(width: 10),
-  ];
+      const SizedBox(width: 10),
+    ];
+  }
 
   Widget _flexibleSpace(ThemeData theme) {
     final style = TextStyle(
@@ -521,20 +509,5 @@ class _FavDetailPageState extends State<FavDetailPage> with GridMixin {
         onReload: _favDetailController.onReload,
       ),
     };
-  }
-}
-
-class CustomFabLocation extends StandardFabLocation with FabFloatOffsetY {
-  const CustomFabLocation();
-
-  @override
-  double getOffsetX(
-    ScaffoldPrelayoutGeometry scaffoldGeometry,
-    double adjustment,
-  ) {
-    return scaffoldGeometry.scaffoldSize.width -
-        scaffoldGeometry.minInsets.right -
-        scaffoldGeometry.floatingActionButtonSize.width +
-        adjustment;
   }
 }

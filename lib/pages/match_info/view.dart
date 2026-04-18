@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/grpc/bilibili/main/community/reply/v1.pb.dart'
@@ -8,6 +9,8 @@ import 'package:PiliPlus/models/common/image_type.dart';
 import 'package:PiliPlus/models_new/match/match_info/contest.dart';
 import 'package:PiliPlus/models_new/match/match_info/team.dart';
 import 'package:PiliPlus/pages/common/dyn/common_dyn_page.dart';
+import 'package:PiliPlus/pages/common/fab_mixin.dart'
+    show NoBottomPaddingFabLocation;
 import 'package:PiliPlus/pages/match_info/controller.dart';
 import 'package:PiliPlus/pages/video/reply_reply/view.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -37,9 +40,6 @@ class _MatchInfoPageState extends CommonDynPageState<MatchInfoPage> {
   dynamic get arguments => null;
 
   @override
-  Offset get fabOffset => const Offset(0, 2);
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
@@ -48,7 +48,7 @@ class _MatchInfoPageState extends CommonDynPageState<MatchInfoPage> {
       body: ViewSafeArea(
         child: refreshIndicator(
           onRefresh: controller.onRefresh,
-          child: CustomScrollView(
+          child: customScrollView(
             controller: scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -59,9 +59,10 @@ class _MatchInfoPageState extends CommonDynPageState<MatchInfoPage> {
           ),
         ),
       ).constraintWidth(),
+      floatingActionButtonLocation: const NoBottomPaddingFabLocation(),
       floatingActionButton: SlideTransition(
-        position: fabAnim,
-        child: replyButton,
+        position: fabAnimation,
+        child: fabButton,
       ),
     );
   }

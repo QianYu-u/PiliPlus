@@ -1,6 +1,7 @@
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/fav/fav_note/list.dart';
@@ -21,10 +22,16 @@ class FavNoteChildPage extends StatefulWidget {
 
 class _FavNoteChildPageState extends State<FavNoteChildPage>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final FavNoteController _favNoteController = Get.put(
-    FavNoteController(widget.isPublish),
-    tag: '${widget.isPublish}',
-  );
+  late final FavNoteController _favNoteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _favNoteController = Get.put(
+      FavNoteController(widget.isPublish),
+      tag: widget.isPublish.toString(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,7 @@ class _FavNoteChildPageState extends State<FavNoteChildPage>
       children: [
         refreshIndicator(
           onRefresh: _favNoteController.onRefresh,
-          child: CustomScrollView(
+          child: customScrollView(
             controller: _favNoteController.scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -119,7 +126,7 @@ class _FavNoteChildPageState extends State<FavNoteChildPage>
                         if (_favNoteController.checkedCount != 0) {
                           showConfirmDialog(
                             context: context,
-                            title: '确定删除已选中的笔记吗？',
+                            title: const Text('确定删除已选中的笔记吗？'),
                             onConfirm: _favNoteController.onRemove,
                           );
                         }

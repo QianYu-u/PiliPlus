@@ -1,17 +1,15 @@
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
 
 class MentionItem with MultiSelectData {
-  String? face;
-  int? fans;
-  String? name;
-  int? officialVerifyType;
-  String? uid;
+  final String? face;
+  final int? fans;
+  final String? name;
+  final String? uid;
 
   MentionItem({
     this.face,
     this.fans,
     this.name,
-    this.officialVerifyType,
     this.uid,
   });
 
@@ -19,7 +17,6 @@ class MentionItem with MultiSelectData {
     face: json['face'] as String?,
     fans: json['fans'] as int?,
     name: json['name'] as String?,
-    officialVerifyType: json['official_verify_type'] as int?,
     uid: json['uid'] as String?,
   );
 

@@ -33,10 +33,13 @@ class FollowPage extends StatefulWidget {
 
 class _FollowPageState extends State<FollowPage> {
   final _tag = Utils.generateRandomString(8);
-  late final FollowController _followController = Get.put(
-    FollowController(),
-    tag: _tag,
-  );
+  late final FollowController _followController;
+
+  @override
+  void initState() {
+    super.initState();
+    _followController = Get.put(FollowController(), tag: _tag);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +109,7 @@ class _FollowPageState extends State<FollowPage> {
 
   Widget _buildBody(LoadingState loadingState) {
     return switch (loadingState) {
-      Loading() => loadingWidget,
+      Loading() => m3eLoading,
       Success() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -188,7 +191,7 @@ class _FollowPageState extends State<FollowPage> {
                 String tagName = item.name!;
                 showConfirmDialog(
                   context: context,
-                  title: '编辑分组名称',
+                  title: const Text('编辑分组名称'),
                   content: TextFormField(
                     autofocus: true,
                     initialValue: tagName,
@@ -218,8 +221,8 @@ class _FollowPageState extends State<FollowPage> {
                 Get.back();
                 showConfirmDialog(
                   context: context,
-                  title: '删除分组',
-                  content: '删除后，该分组下的用户依旧保留？',
+                  title: const Text('删除分组'),
+                  content: const Text('删除后，该分组下的用户依旧保留？'),
                   onConfirm: () => _followController.onDelTag(item.tagid!),
                 );
               },
@@ -239,7 +242,7 @@ class _FollowPageState extends State<FollowPage> {
     String tagName = '';
     showConfirmDialog(
       context: context,
-      title: '新建分组',
+      title: const Text('新建分组'),
       content: TextFormField(
         autofocus: true,
         initialValue: tagName,

@@ -1,6 +1,8 @@
 import 'package:PiliPlus/common/widgets/appbar/appbar.dart';
 import 'package:PiliPlus/common/widgets/flutter/page/tabs.dart';
+import 'package:PiliPlus/common/widgets/flutter/pop_scope.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
 import 'package:PiliPlus/common/widgets/keep_alive_wrapper.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
@@ -26,10 +28,16 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final _historyController = Get.put(
-    HistoryController(widget.type),
-    tag: widget.type ?? 'all',
-  );
+  late final HistoryController _historyController;
+
+  @override
+  void initState() {
+    super.initState();
+    _historyController = Get.put(
+      HistoryController(widget.type),
+      tag: widget.type ?? 'all',
+    );
+  }
 
   HistoryController currCtr([int? index]) {
     try {
@@ -55,7 +63,7 @@ class _HistoryPageState extends State<HistoryPage>
     final padding = MediaQuery.viewPaddingOf(context);
     Widget child = refreshIndicator(
       onRefresh: _historyController.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         controller: _historyController.scrollController,
         slivers: [
@@ -78,7 +86,7 @@ class _HistoryPageState extends State<HistoryPage>
       () {
         final enableMultiSelect =
             _historyController.baseCtr.enableMultiSelect.value;
-        return PopScope(
+        return popScope(
           canPop: !enableMultiSelect,
           onPopInvokedWithResult: (didPop, result) {
             if (enableMultiSelect) {
@@ -98,7 +106,8 @@ class _HistoryPageState extends State<HistoryPage>
                 right: padding.right,
               ),
               child: Obx(() {
-                if (_historyController.tabs.isEmpty) {
+                final tabs = _historyController.tabs;
+                if (tabs.isEmpty) {
                   return child;
                 }
                 return Column(
@@ -121,24 +130,20 @@ class _HistoryPageState extends State<HistoryPage>
                       },
                       tabs: [
                         const Tab(text: '全部'),
-                        ..._historyController.tabs.map(
-                          (item) => Tab(text: item.name),
-                        ),
+                        ...tabs.map((item) => Tab(text: item.name)),
                       ],
                     ),
                     Expanded(
                       child: TabBarView<CustomHorizontalDragGestureRecognizer>(
                         physics: enableMultiSelect
                             ? const NeverScrollableScrollPhysics()
-                            : const CustomTabBarViewScrollPhysics(),
+                            : clampingScrollPhysics,
                         controller: _historyController.tabController,
                         horizontalDragGestureRecognizer:
-                            CustomHorizontalDragGestureRecognizer(),
+                            CustomHorizontalDragGestureRecognizer.new,
                         children: [
-                          KeepAliveWrapper(builder: (context) => child),
-                          ..._historyController.tabs.map(
-                            (item) => HistoryPage(type: item.type),
-                          ),
+                          KeepAliveWrapper(child: child),
+                          ...tabs.map((item) => HistoryPage(type: item.type)),
                         ],
                       ),
                     ),

@@ -1,6 +1,6 @@
 import 'dart:math' show max;
 
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/button/toolbar_icon_button.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
@@ -8,8 +8,8 @@ import 'package:PiliPlus/common/widgets/flutter/draggable_sheet/draggable_scroll
     as dyn_sheet;
 import 'package:PiliPlus/common/widgets/flutter/text_field/controller.dart';
 import 'package:PiliPlus/common/widgets/flutter/text_field/text_field.dart';
-import 'package:PiliPlus/common/widgets/flutter/time_picker.dart';
 import 'package:PiliPlus/common/widgets/pair.dart';
+import 'package:PiliPlus/common/widgets/time_picker.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/publish_panel_type.dart';
@@ -299,9 +299,9 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
           if (imageList.length != limit)
             SliverToBoxAdapter(
               child: Material(
-                borderRadius: StyleString.mdRadius,
+                borderRadius: Style.mdRadius,
                 child: InkWell(
-                  borderRadius: StyleString.mdRadius,
+                  borderRadius: Style.mdRadius,
                   onTap: () => onPickImage(() {
                     if (imageList.isNotEmpty && !enablePublish.value) {
                       enablePublish.value = true;
@@ -311,7 +311,7 @@ class _CreateDynPanelState extends CommonRichTextPubPageState<CreateDynPanel> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      borderRadius: StyleString.mdRadius,
+                      borderRadius: Style.mdRadius,
                       color: theme.colorScheme.secondaryContainer,
                     ),
                     child: const Center(child: Icon(Icons.add, size: 35)),

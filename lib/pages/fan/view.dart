@@ -38,11 +38,17 @@ class FansPage extends StatefulWidget {
 
 class _FansPageState extends FollowTypePageState<FansPage> {
   @override
-  late final FansController controller = Get.put(
-    FansController(widget.showName),
-    tag: Get.arguments?['mid']?.toString() ?? Utils.generateRandomString(8),
-  );
+  late final FansController controller;
   late final flag = widget.onSelect == null && controller.isOwner;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(
+      FansController(widget.showName),
+      tag: Get.arguments?['mid']?.toString() ?? Utils.generateRandomString(8),
+    );
+  }
 
   @override
   PreferredSizeWidget? get appBar => widget.showName
@@ -61,7 +67,7 @@ class _FansPageState extends FollowTypePageState<FansPage> {
   Widget buildItem(int index, FollowItemModel item) {
     void onRemove() => showConfirmDialog(
       context: context,
-      title: '确定移除 ${item.uname} ？',
+      title: Text('确定移除 ${item.uname} ？'),
       onConfirm: () => controller.onRemoveFan(index, item.mid),
     );
 

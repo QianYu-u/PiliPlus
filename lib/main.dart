@@ -4,23 +4,23 @@ import 'package:PiliPlus/build_config.dart';
 import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/widgets/back_detector.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
+import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/common/widgets/scale_app.dart';
 import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/http/init.dart';
 import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
+import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
 import 'package:PiliPlus/services/ai_service.dart';
 import 'package:PiliPlus/services/service_locator.dart';
-import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/calc_window_position.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/json_file_handler.dart';
-import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
@@ -30,6 +30,7 @@ import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -84,6 +85,10 @@ Future<void> _initAppPath() async {
   appSupportDirPath = (await getApplicationSupportDirectory()).path;
 }
 
+Future<void> _initSdkInt() async {
+  Utils.sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+}
+
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
@@ -95,7 +100,7 @@ void main() async {
     if (kDebugMode) debugPrint('GStorage init error: $e');
     exit(0);
   }
-  ScaledWidgetsFlutterBinding.instance.setScaleFactor(Pref.uiScale);
+  ScaledWidgetsFlutterBinding.instance.scaleFactor = Pref.uiScale;
   await Future.wait([_initDownPath(), _initTmpPath()]);
   Get
     ..lazyPut(AccountService.new)
@@ -107,15 +112,8 @@ void main() async {
 
   if (PlatformUtils.isMobile) {
     await Future.wait([
-      SystemChrome.setPreferredOrientations(
-        [
-          DeviceOrientation.portraitUp,
-          if (Pref.horizontalScreen) ...[
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ],
-        ],
-      ),
+      if (Platform.isAndroid) _initSdkInt(),
+      if (Pref.horizontalScreen) ?fullMode() else ?portraitUpMode(),
       setupServiceLocator(),
     ]);
   } else if (Platform.isWindows) {
@@ -126,19 +124,18 @@ void main() async {
         ),
       );
     }
+  } else if (Platform.isMacOS) {
+    await setupServiceLocator();
   }
 
   Request();
   Request.setCookie();
   RequestUtils.syncHistoryStatus();
 
-  SmartDialog.config.toast = SmartConfigToast(
-    displayType: SmartToastType.onlyRefresh,
-  );
+  SmartDialog.config.toast = SmartConfigToast(displayType: .onlyRefresh);
 
   if (PlatformUtils.isMobile) {
-    PiliScheme.init();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setEnabledSystemUIMode(.edgeToEdge);
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         systemNavigationBarColor: Colors.transparent,
@@ -254,26 +251,34 @@ class MyApp extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final dynamicColor = Pref.dynamicColor && _light != null && _dark != null;
+  static (ThemeData, ThemeData) getAllTheme() {
+    final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
     late final brandColor = colorThemeTypes[Pref.customColor].color;
     late final variant = Pref.schemeVariant;
-    return GetMaterialApp(
-      title: Constants.appName,
-      theme: ThemeUtils.getThemeData(
+    return (
+      ThemeUtils.getThemeData(
         colorScheme: dynamicColor
             ? _light!
             : brandColor.asColorSchemeSeed(variant, .light),
         isDynamic: dynamicColor,
       ),
-      darkTheme: ThemeUtils.getThemeData(
+      ThemeUtils.getThemeData(
         isDark: true,
         colorScheme: dynamicColor
             ? _dark!
             : brandColor.asColorSchemeSeed(variant, .dark),
         isDynamic: dynamicColor,
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (light, dark) = getAllTheme();
+    return GetMaterialApp(
+      title: Constants.appName,
+      theme: light,
+      darkTheme: dark,
       themeMode: Pref.themeMode,
       localizationsDelegates: const [
         GlobalCupertinoLocalizations.delegate,
@@ -292,7 +297,7 @@ class MyApp extends StatelessWidget {
         builder: _builder,
       ),
       navigatorObservers: [
-        PageUtils.routeObserver,
+        routeObserver,
         FlutterSmartDialog.observer,
       ],
       scrollBehavior: PlatformUtils.isDesktop

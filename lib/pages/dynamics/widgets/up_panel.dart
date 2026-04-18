@@ -1,4 +1,5 @@
-import 'package:PiliPlus/common/widgets/flutter/dyn/ink_well.dart';
+import 'package:PiliPlus/common/assets.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
 import 'package:PiliPlus/models/common/image_type.dart';
@@ -10,7 +11,7 @@ import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:flutter/material.dart' hide InkWell;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class UpPanel extends StatefulWidget {
@@ -41,7 +42,7 @@ class _UpPanelState extends State<UpPanel> {
     final upData = controller.upState.value.data;
     final List<UpItem> upList = upData.upList;
     final List<LiveUserItem>? liveList = upData.liveUsers?.items;
-    return CustomScrollView(
+    return customScrollView(
       scrollDirection: isTop ? Axis.horizontal : Axis.vertical,
       physics: const AlwaysScrollableScrollPhysics(),
       controller: controller.scrollController,
@@ -163,7 +164,7 @@ class _UpPanelState extends State<UpPanel> {
           width: 38,
           height: 38,
           cacheWidth: 38.cacheSize(context),
-          'assets/images/logo/logo.png',
+          Assets.logo,
         ),
       );
     } else {

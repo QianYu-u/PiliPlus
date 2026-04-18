@@ -1,16 +1,18 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
+import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
-import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/common/widgets/view_sliver_safe_area.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/live/live_contribution_rank_type.dart';
 import 'package:PiliPlus/models_new/live/live_contribution_rank/item.dart';
-import 'package:PiliPlus/models_new/live/live_contribution_rank/medal_info.dart';
 import 'package:PiliPlus/pages/live_room/contribution_rank/controller.dart';
+import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/utils.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -107,14 +109,20 @@ class _ContributionRankType extends StatefulWidget {
 
 class _ContributionRankTypeState extends State<_ContributionRankType>
     with AutomaticKeepAliveClientMixin {
-  late final _controller = Get.put(
-    ContributionRankController(
-      ruid: widget.ruid,
-      roomId: widget.roomId,
-      type: widget.type,
-    ),
-    tag: '${widget.roomId}${widget.type.name}',
-  );
+  late final ContributionRankController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      ContributionRankController(
+        ruid: widget.ruid,
+        roomId: widget.roomId,
+        type: widget.type,
+      ),
+      tag: '${widget.roomId}${widget.type.name}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +132,7 @@ class _ContributionRankTypeState extends State<_ContributionRankType>
       type: .transparency,
       child: refreshIndicator(
         onRefresh: _controller.onRefresh,
-        child: CustomScrollView(
+        child: customScrollView(
           controller: _controller.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -185,6 +193,26 @@ class _Item extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     late final colorScheme = ColorScheme.of(context);
+    Widget child = Text(item.name!);
+    if (item.uinfoMedal case final uinfoMedal?) {
+      try {
+        child = Column(
+          spacing: 4,
+          crossAxisAlignment: .start,
+          children: [
+            child,
+            MedalWidget.fromMedalInfo(
+              medal: uinfoMedal,
+              padding: MedalWidget.mediumPadding,
+            ),
+          ],
+        );
+      } catch (e, s) {
+        if (kDebugMode) {
+          Utils.reportError(e, s);
+        }
+      }
+    }
     return InkWell(
       onTap: () => Get.toNamed('/member?mid=${item.uid}'),
       child: Padding(
@@ -208,34 +236,13 @@ class _Item extends StatelessWidget {
                 ),
               ),
             ),
-            PendantAvatar(
-              avatar: item.face,
-              size: 42,
+            NetworkImgLayer(
+              src: item.face,
+              width: 42,
+              height: 42,
+              type: .avatar,
             ),
-            Expanded(
-              child: Column(
-                spacing: 3,
-                crossAxisAlignment: .start,
-                children: [
-                  Text(item.name!),
-                  Row(
-                    children: [
-                      if (item.medalInfo case MedalInfo(
-                        :final medalName,
-                        :final level,
-                      ))
-                        Text(
-                          '$medalName$level',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: child),
             if (showScore)
               Text(
                 item.score.toString(),

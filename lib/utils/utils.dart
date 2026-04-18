@@ -43,7 +43,7 @@ abstract final class Utils {
     FileType type = FileType.custom,
   }) async {
     try {
-      final path = await FilePicker.platform.saveFile(
+      final path = await FilePicker.saveFile(
         allowedExtensions: allowedExtensions,
         type: type,
         fileName: name,
@@ -81,12 +81,13 @@ abstract final class Utils {
   }
 
   static Color parseColor(String color) =>
-      Color(int.parse(color.replaceFirst('#', 'FF'), radix: 16));
+      Color(int.parse('FF${color.substring(1)}', radix: 16));
 
-  static int? _sdkInt;
-  static Future<int> get sdkInt async {
-    return _sdkInt ??= (await DeviceInfoPlugin().androidInfo).version.sdkInt;
-  }
+  static Color parseMedalColor(String color) => Color(
+    int.parse('${color.substring(7)}${color.substring(1, 7)}', radix: 16),
+  );
+
+  static late int sdkInt;
 
   static bool? _isIpad;
   static Future<bool> get isIpad async {
@@ -162,15 +163,28 @@ abstract final class Utils {
     return randomBase64.substring(0, randomBase64.length - 2);
   }
 
-  static int _getExt(String uri) {
-    final i = uri.indexOf('?');
-    return i == -1 ? uri.length : i;
-  }
-
   static String getFileName(String uri, {bool fileExt = true}) {
-    final i0 = uri.lastIndexOf('/') + 1;
-    final i1 = fileExt ? _getExt(uri) : uri.lastIndexOf('.');
-    return uri.substring(i0, i1);
+    int slash = -1;
+    int dot = -1;
+    int qMark = uri.length;
+
+    loop:
+    for (int index = uri.length - 1; index >= 0; index--) {
+      switch (uri.codeUnitAt(index)) {
+        case 0x2F: // `/`
+          slash = index;
+          break loop;
+        case 0x2E: // `.`
+          if (dot == -1) dot = index;
+          break;
+        case 0x3F: // `?`
+          qMark = index;
+          if (dot > qMark) dot = -1;
+          break;
+      }
+    }
+    RangeError.checkNotNegative(slash, '/');
+    return uri.substring(slash + 1, (fileExt || dot == -1) ? qMark : dot);
   }
 
   /// When calling this from a `catch` block consider annotating the method

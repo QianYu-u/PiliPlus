@@ -2,6 +2,7 @@ import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
@@ -12,7 +13,7 @@ import 'package:PiliPlus/models_new/video/video_detail/episode.dart';
 import 'package:PiliPlus/pages/common/slide/common_slide_page.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:flutter/material.dart' hide RefreshCallback;
+import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -120,7 +121,7 @@ class _MediaListPanelState extends State<MediaListPanel>
 
   Widget _buildList(ThemeData theme) {
     final showDelBtn = widget.onDelete != null && widget.mediaList.length > 1;
-    return CustomScrollView(
+    return customScrollView(
       controller: _controller,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -288,7 +289,7 @@ class _MediaListPanelState extends State<MediaListPanel>
                       customBorder: const CircleBorder(),
                       onTap: () => showConfirmDialog(
                         context: context,
-                        title: '确定移除该视频？',
+                        title: const Text('确定移除该视频？'),
                         onConfirm: () => widget.onDelete!(item, index),
                       ),
                       onLongPress: () => widget.onDelete!(item, index),

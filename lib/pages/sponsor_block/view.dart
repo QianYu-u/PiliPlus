@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -17,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class SponsorBlockPage extends StatefulWidget {
@@ -31,7 +32,7 @@ class _SponsorBlockPageState extends State<SponsorBlockPage> {
   final _url = 'https://github.com/hanydd/BilibiliSponsorBlock';
   final _textController = TextEditingController();
   double _blockLimit = Pref.blockLimit;
-  final List<Pair<SegmentType, SkipType>> _blockSettings = Pref.blockSettings;
+  final _blockSettings = Pref.blockSettings;
   final List<Color> _blockColor = Pref.blockColor;
   String _userId = Pref.blockUserID;
   bool _blockToast = Pref.blockToast;
@@ -485,7 +486,7 @@ class _SponsorBlockPageState extends State<SponsorBlockPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('空降助手')),
-      body: CustomScrollView(
+      body: customScrollView(
         slivers: [
           dividerL,
           SliverToBoxAdapter(child: _serverStatusItem(theme, titleStyle)),

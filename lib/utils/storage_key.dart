@@ -32,7 +32,6 @@ abstract final class SettingBoxKey {
   static const String enableVerticalExpand = 'enableVerticalExpand',
       feedBackEnable = 'feedBackEnable',
       enableLongShowControl = 'enableLongShowControl',
-      allowRotateScreen = 'allowRotateScreen',
       horizontalScreen = 'horizontalScreen',
       CDNService = 'CDNService',
       disableAudioCDN = 'disableAudioCDN',
@@ -100,7 +99,8 @@ abstract final class SettingBoxKey {
       preInitPlayer = 'preInitPlayer',
       mainTabBarView = 'mainTabBarView',
       searchSuggestion = 'searchSuggestion',
-      showDynDecorate = 'showDynDecorate',
+      showDecorate = 'showDynDecorate',
+      showMedal = 'showMedal',
       enableLivePhoto = 'enableLivePhoto',
       showSeekPreview = 'showSeekPreview',
       showDmChart = 'showDmChart',
@@ -148,7 +148,8 @@ abstract final class SettingBoxKey {
       followOrderType = 'followOrderType',
       enableImgMenu = 'enableImgMenu',
       showDynDispute = 'showDynDispute',
-      touchSlopH = 'touchSlopH';
+      touchSlopH = 'touchSlopH',
+      floatingNavBar = 'floatingNavBar';
 
   static const String minimizeOnExit = 'minimizeOnExit',
       windowSize = 'windowSize',
@@ -230,8 +231,7 @@ abstract final class SettingBoxKey {
       enableMYBar = 'enableMYBar',
       hideTopBar = 'hideSearchBar',
       hideBottomBar = 'hideTabBar',
-      scrollThreshold = 'scrollThreshold',
-      enableScrollThreshold = 'enableScrollThreshold',
+      barHideType = 'barHideType',
       tabBarSort = 'tabBarSort',
       dynamicBadgeMode = 'dynamicBadgeMode',
       msgBadgeMode = 'msgBadgeMode',
@@ -239,7 +239,8 @@ abstract final class SettingBoxKey {
       navBarSort = 'navBarSort',
       tempPlayerConf = 'tempPlayerConf',
       reduceLuxColor = 'reduceLuxColor',
-      liveCdnUrl = 'liveCdnUrl';
+      liveCdnUrl = 'liveCdnUrl',
+      saveReply = 'saveReply';
 }
 
 abstract final class LocalCacheKey {

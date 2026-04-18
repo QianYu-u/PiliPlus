@@ -1,8 +1,9 @@
 import 'dart:math';
 
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/button/more_btn.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
@@ -13,7 +14,6 @@ import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/models_new/fav/fav_pgc/list.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_index_result/list.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_timeline/result.dart';
-import 'package:PiliPlus/pages/common/common_page.dart';
 import 'package:PiliPlus/pages/pgc/controller.dart';
 import 'package:PiliPlus/pages/pgc/widgets/pgc_card_v.dart';
 import 'package:PiliPlus/pages/pgc/widgets/pgc_card_v_timeline.dart';
@@ -37,13 +37,17 @@ class PgcPage extends StatefulWidget {
   State<PgcPage> createState() => _PgcPageState();
 }
 
-class _PgcPageState extends CommonPageState<PgcPage, PgcController>
-    with AutomaticKeepAliveClientMixin {
+class _PgcPageState extends State<PgcPage> with AutomaticKeepAliveClientMixin {
+  late final PgcController controller;
+
   @override
-  late PgcController controller = Get.put(
-    PgcController(tabType: widget.tabType),
-    tag: widget.tabType.name,
-  );
+  void initState() {
+    controller = Get.put(
+      PgcController(tabType: widget.tabType),
+      tag: widget.tabType.name,
+    );
+    super.initState();
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -52,28 +56,26 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
   Widget build(BuildContext context) {
     super.build(context);
     final ThemeData theme = Theme.of(context);
-    return onBuild(
-      refreshIndicator(
-        onRefresh: controller.onRefresh,
-        child: CustomScrollView(
-          controller: controller.scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            _buildFollow(theme),
-            if (controller.showPgcTimeline)
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height:
-                      Grid.smallCardWidth / 2 / 0.75 +
-                      MediaQuery.textScalerOf(context).scale(96),
-                  child: Obx(
-                    () => _buildTimeline(theme, controller.timelineState.value),
-                  ),
+    return refreshIndicator(
+      onRefresh: controller.onRefresh,
+      child: customScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          _buildFollow(theme),
+          if (controller.showPgcTimeline)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height:
+                    Grid.smallCardWidth / 2 / 0.75 +
+                    MediaQuery.textScalerOf(context).scale(96),
+                child: Obx(
+                  () => _buildTimeline(theme, controller.timelineState.value),
                 ),
               ),
-            ..._buildRcmd(theme),
-          ],
-        ),
+            ),
+          ..._buildRcmd(theme),
+        ],
       ),
     );
   }
@@ -82,7 +84,7 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
     ThemeData theme,
     LoadingState<List<TimelineResult>?> loadingState,
   ) => switch (loadingState) {
-    Loading() => loadingWidget,
+    Loading() => m3eLoading,
     Success(:final response) =>
       response != null && response.isNotEmpty
           ? Builder(
@@ -169,9 +171,9 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
                                 return Container(
                                   width: Grid.smallCardWidth / 2,
                                   margin: EdgeInsets.only(
-                                    left: StyleString.safeSpace,
+                                    left: Style.safeSpace,
                                     right: index == item.episodes!.length - 1
-                                        ? StyleString.safeSpace
+                                        ? Style.safeSpace
                                         : 0,
                                   ),
                                   child: PgcCardVTimeline(
@@ -207,8 +209,8 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
     _buildRcmdTitle(theme),
     SliverPadding(
       padding: const EdgeInsets.only(
-        left: StyleString.safeSpace,
-        right: StyleString.safeSpace,
+        left: Style.safeSpace,
+        right: Style.safeSpace,
         bottom: 100,
       ),
       sliver: Obx(
@@ -300,8 +302,8 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
   );
 
   late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
-    mainAxisSpacing: StyleString.cardSpace,
-    crossAxisSpacing: StyleString.cardSpace,
+    mainAxisSpacing: Style.cardSpace,
+    crossAxisSpacing: Style.cardSpace,
     maxCrossAxisExtent: Grid.smallCardWidth * 0.6,
     childAspectRatio: 0.75,
     mainAxisExtent: MediaQuery.textScalerOf(context).scale(50),
@@ -396,7 +398,7 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
 
   Widget _buildFollowBody(LoadingState<List<FavPgcItemModel>?> loadingState) {
     return switch (loadingState) {
-      Loading() => loadingWidget,
+      Loading() => m3eLoading,
       Success(:final response) =>
         response != null && response.isNotEmpty
             ? ListView.builder(
@@ -411,14 +413,10 @@ class _PgcPageState extends CommonPageState<PgcPage, PgcController>
                   return Container(
                     width: Grid.smallCardWidth / 2,
                     margin: EdgeInsets.only(
-                      left: StyleString.safeSpace,
-                      right: index == response.length - 1
-                          ? StyleString.safeSpace
-                          : 0,
+                      left: Style.safeSpace,
+                      right: index == response.length - 1 ? Style.safeSpace : 0,
                     ),
-                    child: PgcCardV(
-                      item: response[index],
-                    ),
+                    child: PgcCardV(item: response[index]),
                   );
                 },
               )

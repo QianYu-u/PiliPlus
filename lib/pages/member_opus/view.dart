@@ -1,6 +1,7 @@
-import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/skeleton/space_opus.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/space/space_opus/item.dart';
@@ -31,15 +32,19 @@ class MemberOpus extends StatefulWidget {
 
 class _MemberOpusState extends State<MemberOpus>
     with AutomaticKeepAliveClientMixin {
-  late final _controller = Get.put(
-    MemberOpusController(
-      mid: widget.mid,
-      heroTag: widget.heroTag,
-    ),
-    tag: widget.heroTag,
-  );
+  late final MemberOpusController _controller;
 
-  late double _maxWidth;
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      MemberOpusController(
+        mid: widget.mid,
+        heroTag: widget.heroTag,
+      ),
+      tag: widget.heroTag,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,14 +54,14 @@ class _MemberOpusState extends State<MemberOpus>
       children: [
         refreshIndicator(
           onRefresh: _controller.onRefresh,
-          child: CustomScrollView(
+          child: customScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverPadding(
                 padding: EdgeInsets.only(
                   top: widget.isSingle ? 12 : 0,
-                  left: StyleString.safeSpace,
-                  right: StyleString.safeSpace,
+                  left: Style.safeSpace,
+                  right: Style.safeSpace,
                   bottom: bottom + 100,
                 ),
                 sliver: Obx(() => _buildBody(_controller.loadingState.value)),
@@ -119,9 +124,8 @@ class _MemberOpusState extends State<MemberOpus>
 
   late final gridDelegate = SliverWaterfallFlowDelegateWithMaxCrossAxisExtent(
     maxCrossAxisExtent: Grid.smallCardWidth,
-    mainAxisSpacing: StyleString.safeSpace,
-    crossAxisSpacing: StyleString.safeSpace,
-    afterCalc: (value) => _maxWidth = value,
+    mainAxisSpacing: Style.safeSpace,
+    crossAxisSpacing: Style.safeSpace,
   );
 
   Widget _buildBody(LoadingState<List<SpaceOpusItemModel>?> loadingState) {
@@ -142,10 +146,7 @@ class _MemberOpusState extends State<MemberOpus>
                     if (index == response.length - 1) {
                       _controller.onLoadMore();
                     }
-                    return SpaceOpusItem(
-                      item: response[index],
-                      maxWidth: _maxWidth,
-                    );
+                    return SpaceOpusItem(item: response[index]);
                   },
                   childCount: response.length,
                 ),

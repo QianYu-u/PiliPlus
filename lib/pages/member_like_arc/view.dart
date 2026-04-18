@@ -1,6 +1,7 @@
-import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/skeleton/video_card_v.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/member/coin_like_arc/item.dart';
@@ -28,10 +29,16 @@ class MemberLikeArcPage extends StatefulWidget {
 
 class _MemberLikeArcPageState extends State<MemberLikeArcPage> {
   late final mid = Accounts.main.mid;
-  late final _ctr = Get.put(
-    MemberLikeArcController(mid: widget.mid),
-    tag: Utils.makeHeroTag(widget.mid),
-  );
+  late final MemberLikeArcController _ctr;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctr = Get.put(
+      MemberLikeArcController(mid: widget.mid),
+      tag: Utils.makeHeroTag(widget.mid),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,14 +52,14 @@ class _MemberLikeArcPageState extends State<MemberLikeArcPage> {
       ),
       body: refreshIndicator(
         onRefresh: _ctr.onRefresh,
-        child: CustomScrollView(
+        child: customScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
               padding: EdgeInsets.only(
                 top: 7,
-                left: StyleString.safeSpace + padding.left,
-                right: StyleString.safeSpace + padding.right,
+                left: Style.safeSpace + padding.left,
+                right: Style.safeSpace + padding.right,
                 bottom: padding.bottom + 100,
               ),
               sliver: Obx(() => _buildBody(_ctr.loadingState.value)),
@@ -64,10 +71,10 @@ class _MemberLikeArcPageState extends State<MemberLikeArcPage> {
   }
 
   late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
-    mainAxisSpacing: StyleString.cardSpace,
-    crossAxisSpacing: StyleString.cardSpace,
+    mainAxisSpacing: Style.cardSpace,
+    crossAxisSpacing: Style.cardSpace,
     maxCrossAxisExtent: Grid.smallCardWidth,
-    childAspectRatio: StyleString.aspectRatio,
+    childAspectRatio: Style.aspectRatio,
     mainAxisExtent: MediaQuery.textScalerOf(context).scale(75),
   );
 

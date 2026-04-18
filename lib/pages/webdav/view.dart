@@ -1,4 +1,5 @@
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/pages/webdav/webdav.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -43,7 +44,7 @@ class _WebDavSettingPageState extends State<WebDavSettingPage> {
       body: Stack(
         clipBehavior: Clip.none,
         children: [
-          ListView(
+          listView(
             padding: padding.copyWith(
               top: 20,
               left: 20 + (showAppBar ? padding.left : 0),
@@ -98,7 +99,7 @@ class _WebDavSettingPageState extends State<WebDavSettingPage> {
                     child: FilledButton.tonal(
                       style: FilledButton.styleFrom(
                         shape: const RoundedRectangleBorder(
-                          borderRadius: StyleString.mdRadius,
+                          borderRadius: Style.mdRadius,
                         ),
                       ),
                       onPressed: WebDav().backup,
@@ -110,7 +111,7 @@ class _WebDavSettingPageState extends State<WebDavSettingPage> {
                     child: FilledButton.tonal(
                       style: FilledButton.styleFrom(
                         shape: const RoundedRectangleBorder(
-                          borderRadius: StyleString.mdRadius,
+                          borderRadius: Style.mdRadius,
                         ),
                       ),
                       onPressed: WebDav().restore,

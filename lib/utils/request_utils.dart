@@ -16,11 +16,14 @@ import 'package:PiliPlus/http/validate.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/models/login/model.dart';
+import 'package:PiliPlus/models_new/fav/fav_detail/media.dart';
+import 'package:PiliPlus/models_new/later/list.dart';
+import 'package:PiliPlus/models_new/relation/data.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
-import 'package:PiliPlus/pages/common/multi_select/multi_select_controller.dart';
 import 'package:PiliPlus/pages/dynamics_tab/controller.dart';
+import 'package:PiliPlus/pages/fav_detail/controller.dart'
+    show BaseFavController;
 import 'package:PiliPlus/pages/group_panel/view.dart';
-import 'package:PiliPlus/pages/later/controller.dart';
 import 'package:PiliPlus/pages/login/geetest/geetest_webview_dialog.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
@@ -101,7 +104,7 @@ abstract final class RequestUtils {
     required dynamic mid,
     required bool isFollow,
     required ValueChanged<int>? afterMod,
-    Map? followStatus,
+    RelationData? followStatus,
   }) async {
     if (mid == null) {
       return;
@@ -120,8 +123,8 @@ abstract final class RequestUtils {
         res.toast();
       }
     } else {
-      if (followStatus?['tag'] == null) {
-        final res = await UserHttp.hasFollow(mid);
+      if (followStatus?.tag == null) {
+        final res = await UserHttp.userRelation(mid);
         if (res case Success(:final response)) {
           followStatus = response;
         } else {
@@ -131,7 +134,7 @@ abstract final class RequestUtils {
       }
 
       if (context.mounted) {
-        bool isSpecialFollowed = followStatus!['special'] == 1;
+        bool isSpecialFollowed = followStatus!.special == 1;
         String text = isSpecialFollowed ? '移除特别关注' : '加入特别关注';
         showDialog(
           context: context,
@@ -192,15 +195,15 @@ abstract final class RequestUtils {
                               ) {
                                 return GroupPanel(
                                   mid: mid,
-                                  tags: followStatus!['tag'],
+                                  tags: followStatus!.tag,
                                   scrollController: scrollController,
                                 );
                               },
                         );
                       },
                     );
-                    followStatus!['tag'] = result?.toList();
                     if (result != null) {
+                      followStatus!.tag = result.toList();
                       afterMod?.call(result.contains(-10) ? -10 : 2);
                     }
                   },
@@ -360,37 +363,39 @@ abstract final class RequestUtils {
   // 动态点赞
   static Future<void> onLikeDynamic(
     DynamicItemModel item,
+    bool uiStatus,
     VoidCallback onSuccess,
   ) async {
     feedBack();
-    String dynamicId = item.idStr!;
-    // 1 已点赞 2 不喜欢 0 未操作
-    DynamicStat? like = item.modules.moduleStat?.like;
-    int count = like?.count ?? 0;
-    bool status = like?.status ?? false;
-    int up = status ? 2 : 1;
-    final res = await DynamicsHttp.thumbDynamic(dynamicId: dynamicId, up: up);
+
+    final like = item.modules.moduleStat?.like;
+    final status = like?.status ?? false;
+
+    if (status ^ uiStatus) {
+      SmartDialog.showToast(status ? '点赞成功' : '取消赞');
+      onSuccess();
+      return;
+    }
+
+    final res = await DynamicsHttp.thumbDynamic(
+      dynamicId: item.idStr!,
+      up: status ? 2 : 1, // 1 已点赞 2 不喜欢 0 未操作
+    );
     if (res.isSuccess) {
-      SmartDialog.showToast(!status ? '点赞成功' : '取消赞');
-      if (up == 1) {
-        like
-          ?..count = count + 1
-          ..status = true;
-      } else {
-        like
-          ?..count = count - 1
-          ..status = false;
-      }
+      SmartDialog.showToast(status ? '取消赞' : '点赞成功');
+      like
+        ?..count = (like.count ?? 0) + (status ? -1 : 1)
+        ..status = !status;
       onSuccess();
     } else {
       res.toast();
     }
   }
 
-  static void onCopyOrMove<R, T extends MultiSelectData>({
+  static void onCopyOrMove<T extends MultiSelectData>({
     required BuildContext context,
     required bool isCopy,
-    required MultiSelectController<R, T> ctr,
+    required CommonMultiSelectMixin<T> ctr,
     required dynamic mediaId,
     required dynamic mid,
   }) {
@@ -437,18 +442,20 @@ abstract final class RequestUtils {
                 TextButton(
                   onPressed: () {
                     if (checkedId != null) {
-                      Set removeList = ctr.allChecked.toSet();
+                      final removeList = ctr.allChecked.toSet();
                       SmartDialog.showLoading();
                       FavHttp.copyOrMoveFav(
                         isCopy: isCopy,
-                        isFav: ctr is! LaterController,
+                        isFav: ctr is BaseFavController,
                         srcMediaId: mediaId,
                         tarMediaId: checkedId,
                         resources: removeList
                             .map(
-                              (item) => ctr is LaterController
-                                  ? item.aid
-                                  : '${item.id}:${item.type}',
+                              (e) => switch (e) {
+                                LaterItemModel _ => e.aid,
+                                FavDetailItemModel _ => '${e.id}:${e.type}',
+                                _ => throw UnsupportedError(e.toString()),
+                              },
                             )
                             .join(','),
                         mid: isCopy ? mid : null,
@@ -486,10 +493,6 @@ abstract final class RequestUtils {
     String vVoucher,
     ValueChanged<String> onSuccess,
   ) async {
-    if (Platform.isLinux) {
-      return;
-    }
-
     final res = await ValidateHttp.gaiaVgateRegister(vVoucher);
     if (!res.isSuccess) {
       res.toast();

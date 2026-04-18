@@ -2,6 +2,7 @@ import 'package:PiliPlus/common/skeleton/fav_pgc_item.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/fav/fav_pgc/list.dart';
@@ -27,10 +28,16 @@ class FavPgcChildPage extends StatefulWidget {
 
 class _FavPgcChildPageState extends State<FavPgcChildPage>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final FavPgcController _favPgcController = Get.put(
-    FavPgcController(widget.type, widget.followStatus),
-    tag: '${widget.type}${widget.followStatus}',
-  );
+  late final FavPgcController _favPgcController;
+
+  @override
+  void initState() {
+    super.initState();
+    _favPgcController = Get.put(
+      FavPgcController(widget.type, widget.followStatus),
+      tag: '${widget.type}${widget.followStatus}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +50,7 @@ class _FavPgcChildPageState extends State<FavPgcChildPage>
       children: [
         refreshIndicator(
           onRefresh: _favPgcController.onRefresh,
-          child: CustomScrollView(
+          child: customScrollView(
             controller: _favPgcController.scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [

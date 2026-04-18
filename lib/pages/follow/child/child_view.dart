@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:PiliPlus/common/skeleton/msg_feed_top.dart';
 import 'package:PiliPlus/common/widgets/button/more_btn.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/follow_order_type.dart';
@@ -38,10 +39,16 @@ class FollowChildPage extends StatefulWidget {
 
 class _FollowChildPageState extends State<FollowChildPage>
     with AutomaticKeepAliveClientMixin {
-  late final _followController = Get.put(
-    FollowChildController(widget.controller, widget.mid, widget.tagid),
-    tag: '${widget.tag ?? Utils.generateRandomString(8)}${widget.tagid}',
-  );
+  late final FollowChildController _followController;
+
+  @override
+  void initState() {
+    super.initState();
+    _followController = Get.put(
+      FollowChildController(widget.controller, widget.mid, widget.tagid),
+      tag: '${widget.tag ?? Utils.generateRandomString(8)}${widget.tagid}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +59,7 @@ class _FollowChildPageState extends State<FollowChildPage>
       padding: EdgeInsets.only(left: padding.left, right: padding.right),
       child: refreshIndicator(
         onRefresh: _followController.onRefresh,
-        child: CustomScrollView(
+        child: customScrollView(
           controller: _followController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [

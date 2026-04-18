@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:PiliPlus/common/widgets/color_palette.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
@@ -7,6 +8,7 @@ import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/scale_app.dart';
 import 'package:PiliPlus/common/widgets/stateful_builder.dart';
 import 'package:PiliPlus/main.dart';
+import 'package:PiliPlus/models/common/bar_hide_type.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
 import 'package:PiliPlus/models/common/home_tab_type.dart';
@@ -18,24 +20,27 @@ import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/slide_color_picker.dart';
-import 'package:PiliPlus/pages/setting/widgets/dual_slide_dialog.dart';
+import 'package:PiliPlus/pages/setting/widgets/dual_slider_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
-import 'package:PiliPlus/pages/setting/widgets/slide_dialog.dart';
+import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/utils/extension/file_ext.dart';
+import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:auto_orientation/auto_orientation.dart';
 import 'package:flutter/material.dart' hide StatefulBuilder;
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:path/path.dart' as path;
 
 List<SettingsModel> get styleSettings => [
   if (PlatformUtils.isDesktop) ...[
@@ -54,6 +59,7 @@ List<SettingsModel> get styleSettings => [
       needReboot: true,
     ),
   ],
+  if (Platform.isLinux) _useSSDModel(),
   SwitchModel(
     title: '横屏适配',
     subtitle: '启用横屏布局与逻辑，平板、折叠屏等可开启；建议全屏方向设为【不改变当前方向】',
@@ -62,9 +68,9 @@ List<SettingsModel> get styleSettings => [
     defaultVal: Pref.horizontalScreen,
     onChanged: (value) {
       if (value) {
-        autoScreen();
+        fullMode();
       } else {
-        AutoOrientation.portraitUpMode();
+        portraitUpMode();
       }
     },
   ),
@@ -76,14 +82,18 @@ List<SettingsModel> get styleSettings => [
     defaultVal: false,
     needReboot: true,
   ),
-  SwitchModel(
-    title: 'App字体字重',
-    subtitle: '点击设置',
-    setKey: SettingBoxKey.appFontWeight,
-    defaultVal: false,
-    leading: const Icon(Icons.text_fields),
-    onChanged: (value) => Get.forceAppUpdate(),
-    onTap: _showFontWeightDialog,
+  SplitModel(
+    normalModel: const NormalModel.split(
+      title: 'App字体字重',
+      subtitle: '点击设置',
+      leading: Icon(Icons.text_fields),
+    ),
+    switchModel: SwitchModel.split(
+      defaultVal: false,
+      setKey: SettingBoxKey.appFontWeight,
+      onChanged: (_) => Get.updateMyAppTheme(),
+      onTap: _showFontWeightDialog,
+    ),
   ),
   NormalModel(
     title: '界面缩放',
@@ -99,7 +109,7 @@ List<SettingsModel> get styleSettings => [
   ),
   const SwitchModel(
     title: '优化平板导航栏',
-    leading: Icon(MdiIcons.soundbar),
+    leading: Icon(Icons.auto_fix_high),
     setKey: SettingBoxKey.optTabletNav,
     defaultVal: true,
     needReboot: true,
@@ -110,6 +120,13 @@ List<SettingsModel> get styleSettings => [
     leading: Icon(Icons.design_services_outlined),
     setKey: SettingBoxKey.enableMYBar,
     defaultVal: true,
+    needReboot: true,
+  ),
+  const SwitchModel(
+    title: '悬浮底栏',
+    leading: Icon(MdiIcons.soundbar),
+    setKey: SettingBoxKey.floatingNavBar,
+    defaultVal: false,
     needReboot: true,
   ),
   NormalModel(
@@ -126,7 +143,7 @@ List<SettingsModel> get styleSettings => [
     defaultVal: false,
     onChanged: (value) {
       if (value && MyApp.darkThemeData == null) {
-        Get.forceAppUpdate();
+        Get.updateMyAppTheme();
       }
     },
   ),
@@ -177,6 +194,12 @@ List<SettingsModel> get styleSettings => [
     getSubtitle: () =>
         '当前消息类型：${Pref.msgUnReadTypeV2.map((item) => item.title).join('、')}',
   ),
+  NormalModel(
+    onTap: _showBarHideTypeDialog,
+    title: '顶/底栏收起类型',
+    leading: const Icon(MdiIcons.arrowExpandVertical),
+    getSubtitle: () => '当前：${Pref.barHideType.label}',
+  ),
   SwitchModel(
     title: '首页顶栏收起',
     subtitle: '首页列表滑动时，收起顶栏',
@@ -192,15 +215,6 @@ List<SettingsModel> get styleSettings => [
     setKey: SettingBoxKey.hideBottomBar,
     defaultVal: PlatformUtils.isMobile,
     needReboot: true,
-  ),
-  const SwitchModel(
-    title: '顶/底栏滚动阈值',
-    subtitle: '滚动多少像素后收起/展开顶底栏，默认50像素',
-    leading: Icon(Icons.swipe_vertical),
-    defaultVal: false,
-    setKey: SettingBoxKey.enableScrollThreshold,
-    needReboot: true,
-    onTap: _showScrollDialog,
   ),
   NormalModel(
     onTap: (context, setState) => _showQualityDialog(
@@ -276,7 +290,7 @@ List<SettingsModel> get styleSettings => [
     defaultVal: false,
     onChanged: (value) {
       if (Get.isDarkMode || Pref.darkVideoPage) {
-        Get.forceAppUpdate();
+        Get.updateMyAppTheme();
       }
     },
   ),
@@ -372,7 +386,7 @@ void _showQualityDialog({
 }) {
   showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       value: initValue.toDouble(),
       title: title,
       min: 10,
@@ -460,7 +474,7 @@ void _showUiScaleDialog(
             GStorage.setting.delete(SettingBoxKey.uiScale).whenComplete(() {
               setState();
               Get.appUpdate();
-              ScaledWidgetsFlutterBinding.instance.setScaleFactor(1.0);
+              ScaledWidgetsFlutterBinding.instance.scaleFactor = 1.0;
             });
           },
           child: const Text('重置'),
@@ -479,59 +493,9 @@ void _showUiScaleDialog(
               () {
                 setState();
                 Get.appUpdate();
-                ScaledWidgetsFlutterBinding.instance.setScaleFactor(uiScale);
+                ScaledWidgetsFlutterBinding.instance.scaleFactor = uiScale;
               },
             );
-          },
-          child: const Text('确定'),
-        ),
-      ],
-    ),
-  );
-}
-
-void _showSpringDurationDialog(BuildContext context) {
-  String initialValue = '500';
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('滑动时间'),
-      content: TextFormField(
-        autofocus: true,
-        keyboardType: .number,
-        initialValue: initialValue,
-        onChanged: (value) => initialValue = value,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(suffixText: 'ms'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: Get.back,
-          child: Text(
-            '取消',
-            style: TextStyle(color: ColorScheme.of(context).outline),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            try {
-              final milliseconds = int.parse(initialValue);
-              Get.back();
-              final springDescription = SpringDescription.withDurationAndBounce(
-                duration: Duration(milliseconds: milliseconds),
-              );
-              GStorage.setting.put(
-                SettingBoxKey.springDescription,
-                [
-                  springDescription.mass,
-                  springDescription.stiffness,
-                  springDescription.damping,
-                ],
-              );
-              SmartDialog.showToast('设置成功，重启生效');
-            } catch (e) {
-              SmartDialog.showToast(e.toString());
-            }
           },
           child: const Text('确定'),
         ),
@@ -543,7 +507,38 @@ void _showSpringDurationDialog(BuildContext context) {
 void _showSpringDialog(BuildContext context, _) {
   final List<String> springDescription = Pref.springDescription
       .map((i) => i.toString())
-      .toList();
+      .toList(growable: false);
+  bool physicalMode = true;
+
+  void physical2Duration() {
+    final mass = double.parse(springDescription[0]);
+    final stiffness = double.parse(springDescription[1]);
+    final damping = double.parse(springDescription[2]);
+
+    final duration = math.sqrt(4 * math.pi * math.pi * mass / stiffness);
+    final dampingRatio = damping / (2.0 * math.sqrt(mass * stiffness));
+    final bounce = dampingRatio < 1.0
+        ? 1.0 - dampingRatio
+        : 1.0 / dampingRatio - 1;
+
+    springDescription[0] = duration.toString();
+    springDescription[1] = bounce.toString();
+  }
+
+  /// from [SpringDescription.withDurationAndBounce] but with higher precision
+  void duration2Physical() {
+    final duration = double.parse(springDescription[0]);
+    final bounce = double.parse(springDescription[1]).clamp(-1.0, 1.0);
+
+    final stiffness = 4 * math.pi * math.pi / math.pow(duration, 2);
+    final dampingRatio = bounce > 0 ? 1.0 - bounce : 1.0 / (bounce + 1);
+    final damping = 2 * math.sqrt(stiffness) * dampingRatio;
+
+    springDescription[0] = '1';
+    springDescription[1] = stiffness.toString();
+    springDescription[2] = damping.toString();
+  }
+
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
@@ -557,27 +552,45 @@ void _showSpringDialog(BuildContext context, _) {
               tapTargetSize: .shrinkWrap,
             ),
             onPressed: () {
-              Get.back();
-              _showSpringDurationDialog(context);
+              try {
+                if (physicalMode) {
+                  physical2Duration();
+                } else {
+                  duration2Physical();
+                }
+                physicalMode = !physicalMode;
+                (context as Element).markNeedsBuild();
+              } catch (e) {
+                SmartDialog.showToast(e.toString());
+              }
             },
-            child: const Text('滑动时间'),
+            child: Text(physicalMode ? '滑动时间' : '物理参数'),
           ),
         ],
       ),
       content: Column(
-        mainAxisSize: MainAxisSize.min,
+        key: ValueKey(physicalMode),
+        mainAxisSize: .min,
         children: List.generate(
-          3,
+          physicalMode ? 3 : 2,
           (index) => TextFormField(
             autofocus: index == 0,
             initialValue: springDescription[index],
-            keyboardType: const .numberWithOptions(decimal: true),
+            keyboardType: .numberWithOptions(
+              signed: !physicalMode && index == 1,
+              decimal: true,
+            ),
             onChanged: (value) => springDescription[index] = value,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+')),
+              !physicalMode && index == 1
+                  ? FilteringTextInputFormatter.allow(RegExp(r'[-\d\.]+'))
+                  : FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+')),
             ],
             decoration: InputDecoration(
-              labelText: const ['mass', 'stiffness', 'damping'][index],
+              labelText: (physicalMode
+                  ? const ['mass', 'stiffness', 'damping']
+                  : const ['duration', 'bounce'])[index],
+              suffixText: !physicalMode && index == 0 ? 's' : null,
             ),
           ),
         ),
@@ -601,6 +614,9 @@ void _showSpringDialog(BuildContext context, _) {
         TextButton(
           onPressed: () {
             try {
+              if (!physicalMode) {
+                duration2Physical();
+              }
               final res = springDescription.map(double.parse).toList();
               Get.back();
               GStorage.setting.put(SettingBoxKey.springDescription, res);
@@ -619,7 +635,7 @@ void _showSpringDialog(BuildContext context, _) {
 Future<void> _showFontWeightDialog(BuildContext context) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: 'App字体字重',
       value: Pref.appFontWeight.toDouble() + 1,
       min: 1,
@@ -629,7 +645,7 @@ Future<void> _showFontWeightDialog(BuildContext context) async {
   );
   if (res != null) {
     await GStorage.setting.put(SettingBoxKey.appFontWeight, res.toInt() - 1);
-    Get.forceAppUpdate();
+    Get.updateMyAppTheme();
   }
 }
 
@@ -658,7 +674,7 @@ Future<void> _showCardWidthDialog(
 ) async {
   final res = await showDialog<(double, double)>(
     context: context,
-    builder: (context) => DualSlideDialog(
+    builder: (context) => DualSliderDialog(
       title: '列表最大列宽度（默认240dp）',
       value1: Pref.recommendCardWidth,
       value2: Pref.smallCardWidth,
@@ -778,48 +794,6 @@ Future<void> _showMsgUnReadDialog(
   }
 }
 
-void _showScrollDialog(BuildContext context) {
-  String scrollThreshold = Pref.scrollThreshold.toString();
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('滚动阈值'),
-      content: TextFormField(
-        autofocus: true,
-        initialValue: scrollThreshold,
-        keyboardType: const .numberWithOptions(decimal: true),
-        onChanged: (value) => scrollThreshold = value,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+')),
-        ],
-        decoration: const InputDecoration(suffixText: 'px'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: Get.back,
-          child: Text(
-            '取消',
-            style: TextStyle(color: ColorScheme.of(context).outline),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            try {
-              final val = double.parse(scrollThreshold);
-              Get.back();
-              GStorage.setting.put(SettingBoxKey.scrollThreshold, val);
-              SmartDialog.showToast('重启生效');
-            } catch (e) {
-              SmartDialog.showToast(e.toString());
-            }
-          },
-          child: const Text('确定'),
-        ),
-      ],
-    ),
-  );
-}
-
 void _showReduceColorDialog(
   BuildContext context,
   VoidCallback setState,
@@ -854,9 +828,10 @@ void _showReduceColorDialog(
               if (color.computeLuminance() < 0.2) {
                 showConfirmDialog(
                   context: context,
-                  title:
-                      '确认使用#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).toUpperCase().padLeft(6)}？',
-                  content: '所选颜色过于昏暗，可能会影响图片观看',
+                  title: Text(
+                    '确认使用#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).toUpperCase().padLeft(6)}？',
+                  ),
+                  content: const Text('所选颜色过于昏暗，可能会影响图片观看'),
                   onConfirm: onConfirm,
                 );
               } else {
@@ -876,7 +851,7 @@ Future<void> _showToastDialog(
 ) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: 'Toast不透明度',
       value: CustomToast.toastOpacity,
       min: 0.0,
@@ -931,4 +906,51 @@ Future<void> _showDefHomeDialog(
     SmartDialog.showToast('设置成功，重启生效');
     setState();
   }
+}
+
+Future<void> _showBarHideTypeDialog(
+  BuildContext context,
+  VoidCallback setState,
+) async {
+  final res = await showDialog<BarHideType>(
+    context: context,
+    builder: (context) => SelectDialog<BarHideType>(
+      title: '顶/底栏收起类型',
+      value: Pref.barHideType,
+      values: BarHideType.values.map((e) => (e, e.label)).toList(),
+    ),
+  );
+  if (res != null) {
+    await GStorage.setting.put(SettingBoxKey.barHideType, res.index);
+    SmartDialog.showToast('重启生效');
+    setState();
+  }
+}
+
+NormalModel _useSSDModel() {
+  final file = File(path.join(appSupportDirPath, 'use_ssd'));
+  void onChanged(BuildContext context, VoidCallback setState) {
+    (file.existsSync() ? file.tryDel() : file.create()).whenComplete(() {
+      if (context.mounted) {
+        setState();
+      }
+    });
+  }
+
+  return NormalModel(
+    title: '使用SSD（Server-Side Decoration）',
+    leading: const Icon(Icons.web_asset),
+    onTap: onChanged,
+    getTrailing: (theme) => Builder(
+      builder: (context) => Transform.scale(
+        scale: 0.8,
+        alignment: .centerRight,
+        child: Switch(
+          value: file.existsSync(),
+          onChanged: (_) =>
+              onChanged(context, (context as Element).markNeedsBuild),
+        ),
+      ),
+    ),
+  );
 }

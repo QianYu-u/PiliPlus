@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/fav/fav_folder/list.dart';
@@ -41,8 +42,8 @@ class _FavPanelState extends State<FavPanel> {
   Widget get _buildBody {
     late final list = widget.ctr.favFolderData.value.list!;
     return switch (loadingState) {
-      Loading() => loadingWidget,
-      Success() => ListView.builder(
+      Loading() => m3eLoading,
+      Success() => ExtendedListView.builder(
         controller: widget.scrollController,
         itemCount: list.length,
         itemBuilder: (context, index) {

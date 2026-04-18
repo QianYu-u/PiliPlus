@@ -21,7 +21,7 @@ version: 1.1.5+1
 
 environment:
   sdk: ">=3.10.0"
-  flutter: ">=3.38.6" # update `.fvmrc` config
+  flutter: 3.38.6 # update `.fvmrc` config
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -163,9 +163,6 @@ dependencies:
   html: ^0.15.4
   # html渲染
   flutter_html: ^3.0.0-beta.2
-  # markdown渲染（支持LaTeX）
-  markdown_widget: ^2.3.2+8
-  flutter_math_fork: ^0.7.2
   # 极验
   gt3_flutter_plugin: ^0.1.0
   uuid: ^4.5.1
@@ -242,7 +239,6 @@ dependencies:
   http2: any
   screen_retriever: any
   characters: any
-  markdown: ^7.3.0
 
 dependency_overrides:
   # screen_brightness: ^2.1.

@@ -12,6 +12,7 @@ import 'package:PiliPlus/models_new/sponsor_block/user_info.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 /// https://github.com/hanydd/BilibiliSponsorBlock/wiki/API
 abstract final class SponsorBlock {
@@ -19,10 +20,12 @@ abstract final class SponsorBlock {
   static final options = Options(
     followRedirects: true,
     // https://github.com/hanydd/BilibiliSponsorBlock/wiki/API#1-%E5%85%AC%E7%94%A8%E5%8F%82%E6%95%B0
-    headers: {
-      'origin': Constants.appName,
-      'x-ext-version': BuildConfig.versionName,
-    },
+    headers: kDebugMode
+        ? null
+        : {
+            'origin': Constants.appName,
+            'x-ext-version': BuildConfig.versionName,
+          },
     validateStatus: (status) => true,
   );
 
@@ -71,7 +74,7 @@ abstract final class SponsorBlock {
     return getErrMsg(res);
   }
 
-  static Future<LoadingState<Null>> voteOnSponsorTime({
+  static Future<LoadingState<void>> voteOnSponsorTime({
     required String uuid,
     int? type,
     SegmentType? category,
@@ -90,7 +93,7 @@ abstract final class SponsorBlock {
     return res.statusCode == 200 ? const Success(null) : getErrMsg(res);
   }
 
-  static Future<LoadingState<Null>> viewedVideoSponsorTime(String uuid) async {
+  static Future<LoadingState<void>> viewedVideoSponsorTime(String uuid) async {
     final res = await Request().post(
       _api(SponsorBlockApi.viewedVideoSponsorTime),
       data: {'UUID': uuid},
@@ -99,7 +102,7 @@ abstract final class SponsorBlock {
     return res.statusCode == 200 ? const Success(null) : getErrMsg(res);
   }
 
-  static Future<LoadingState<Null>> uptimeStatus() async {
+  static Future<LoadingState<void>> uptimeStatus() async {
     final res = await Request().get(
       _api(SponsorBlockApi.uptimeStatus),
       options: options,
@@ -142,7 +145,9 @@ abstract final class SponsorBlock {
         'videoID': bvid,
         'cid': cid.toString(),
         'userID': Pref.blockUserID,
-        'userAgent': '${Constants.appName}/${BuildConfig.versionName}',
+        'userAgent': kDebugMode
+            ? Constants.userAgent
+            : '${Constants.appName}/${BuildConfig.versionName}',
         'videoDuration': videoDuration,
         'segments': segments
             .map(

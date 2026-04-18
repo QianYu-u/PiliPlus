@@ -1,7 +1,8 @@
 import 'package:PiliPlus/common/skeleton/video_card_h.dart';
-import 'package:PiliPlus/common/widgets/custom_sliver_persistent_header_delegate.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
+import 'package:PiliPlus/common/widgets/sliver/sliver_pinned_header.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/space/space_fav/data.dart';
 import 'package:PiliPlus/pages/member_favorite/controller.dart';
@@ -29,10 +30,16 @@ class _MemberFavoriteState extends State<MemberFavorite>
   @override
   bool get wantKeepAlive => true;
 
-  late final _controller = Get.put(
-    MemberFavoriteCtr(mid: widget.mid),
-    tag: widget.heroTag,
-  );
+  late final MemberFavoriteCtr _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      MemberFavoriteCtr(mid: widget.mid),
+      tag: widget.heroTag,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +47,7 @@ class _MemberFavoriteState extends State<MemberFavorite>
     final theme = Theme.of(context);
     return refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         physics: _FavScrollPhysics(controller: _controller),
         slivers: [
           SliverPadding(
@@ -103,58 +110,52 @@ class _MemberFavoriteState extends State<MemberFavorite>
   }) {
     return SliverMainAxisGroup(
       slivers: [
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: CustomSliverPersistentHeaderDelegate(
-            child: Material(
-              color: theme.colorScheme.surface,
-              child: Builder(
-                builder: (context) {
-                  return InkWell(
-                    onTap: () {
-                      _controller.setExpand(isFav);
-                      (context as Element).markNeedsBuild();
-                      data.refresh();
-                      if (!isEnd.value) {
-                        isEnd.refresh();
-                      }
-                    },
-                    child: Container(
-                      height: 45,
-                      alignment: .centerLeft,
-                      padding: const .only(left: 12),
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            WidgetSpan(
-                              alignment: .middle,
-                              child: Icon(
-                                _controller.isExpand(isFav)
-                                    ? Icons.expand_less
-                                    : Icons.expand_more,
-                                color: theme.colorScheme.outline,
-                              ),
+        SliverPinnedHeader(
+          child: Material(
+            color: theme.colorScheme.surface,
+            child: Builder(
+              builder: (context) {
+                return InkWell(
+                  onTap: () {
+                    _controller.setExpand(isFav);
+                    (context as Element).markNeedsBuild();
+                    data.refresh();
+                    if (!isEnd.value) {
+                      isEnd.refresh();
+                    }
+                  },
+                  child: Padding(
+                    padding: const .symmetric(horizontal: 12, vertical: 10),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          WidgetSpan(
+                            alignment: .middle,
+                            child: Icon(
+                              _controller.isExpand(isFav)
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              color: theme.colorScheme.outline,
                             ),
-                            TextSpan(
-                              text: ' ${data.value.name}',
-                              style: const TextStyle(fontSize: 14),
+                          ),
+                          TextSpan(
+                            text: ' ${data.value.name}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          TextSpan(
+                            text: ' ${data.value.mediaListResponse?.count}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: theme.colorScheme.outline,
                             ),
-                            TextSpan(
-                              text: ' ${data.value.mediaListResponse?.count}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-            bgColor: null,
           ),
         ),
         Obx(() {

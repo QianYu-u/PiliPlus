@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:PiliPlus/common/widgets/interactiveviewer_gallery/hero_dialog_route.dart';
-import 'package:PiliPlus/common/widgets/interactiveviewer_gallery/interactiveviewer_gallery.dart';
+import 'package:PiliPlus/common/widgets/image_viewer/gallery_viewer.dart';
+import 'package:PiliPlus/common/widgets/image_viewer/hero_dialog_route.dart';
 import 'package:PiliPlus/grpc/im.dart';
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -16,8 +16,6 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/contact/view.dart';
 import 'package:PiliPlus/pages/fav_panel/view.dart';
 import 'package:PiliPlus/pages/share/view.dart';
-import 'package:PiliPlus/pages/video/introduction/ugc/widgets/menu_row.dart';
-import 'package:PiliPlus/services/shutdown_timer_service.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/extension.dart';
@@ -34,15 +32,11 @@ import 'package:PiliPlus/utils/utils.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 abstract final class PageUtils {
-  static final RouteObserver<PageRoute> routeObserver =
-      RouteObserver<PageRoute>();
-
   static RelativeRect menuPosition(Offset offset) {
     return .fromLTRB(offset.dx, offset.dy, offset.dx, 0);
   }
@@ -51,15 +45,18 @@ abstract final class PageUtils {
     int initialPage = 0,
     required List<SourceModel> imgList,
     int? quality,
+    ValueChanged<int>? onPageChanged,
+    String tag = '',
   }) {
     return Get.key.currentState!.push<void>(
       HeroDialogRoute(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            InteractiveviewerGallery(
-              sources: imgList,
-              initIndex: initialPage,
-              quality: quality ?? GlobalData().imgQuality,
-            ),
+        pageBuilder: (context, animation, secondaryAnimation) => GalleryViewer(
+          sources: imgList,
+          initIndex: initialPage,
+          quality: quality ?? GlobalData().imgQuality,
+          onPageChanged: onPageChanged,
+          tag: tag,
+        ),
       ),
     );
   }
@@ -110,192 +107,11 @@ abstract final class PageUtils {
     }
   }
 
-  static void scheduleExit(
-    BuildContext context,
-    isFullScreen, [
-    bool isLive = false,
-  ]) {
-    if (!context.mounted) {
-      return;
-    }
-    const List<int> scheduleTimeChoices = [0, 15, 30, 45, 60];
-    const TextStyle titleStyle = TextStyle(fontSize: 14);
-    if (isLive) {
-      shutdownTimerService.waitForPlayingCompleted = false;
-    }
-    showVideoBottomSheet(
-      context,
-      isFullScreen: () => isFullScreen,
-      child: StatefulBuilder(
-        builder: (_, setState) {
-          void onTap(int choice) {
-            if (choice == -1) {
-              String duration = '';
-              showDialog(
-                context: context,
-                builder: (context) {
-                  final theme = Theme.of(context);
-                  return AlertDialog(
-                    title: const Text('自定义时长'),
-                    content: TextField(
-                      autofocus: true,
-                      onChanged: (value) => duration = value,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(suffixText: 'min'),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: Get.back,
-                        child: Text(
-                          '取消',
-                          style: TextStyle(color: theme.colorScheme.outline),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          try {
-                            final choice = int.parse(duration);
-                            Get.back();
-                            shutdownTimerService
-                              ..scheduledExitInMinutes = choice
-                              ..startShutdownTimer();
-                            setState(() {});
-                          } catch (e) {
-                            SmartDialog.showToast(e.toString());
-                          }
-                        },
-                        child: const Text('确定'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            } else {
-              Get.back();
-              shutdownTimerService.scheduledExitInMinutes = choice;
-              shutdownTimerService.startShutdownTimer();
-            }
-          }
-
-          final ThemeData theme = Theme.of(context);
-          return Theme(
-            data: theme,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Material(
-                clipBehavior: Clip.hardEdge,
-                color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  children: [
-                    const Center(child: Text('定时关闭', style: titleStyle)),
-                    const SizedBox(height: 10),
-                    ...[
-                      ...[
-                        ...scheduleTimeChoices,
-                        if (!scheduleTimeChoices.contains(
-                          shutdownTimerService.scheduledExitInMinutes,
-                        ))
-                          shutdownTimerService.scheduledExitInMinutes,
-                      ]..sort(),
-                      -1,
-                    ].map(
-                      (choice) => ListTile(
-                        dense: true,
-                        onTap: () => onTap(choice),
-                        title: Text(
-                          choice == -1
-                              ? '自定义'
-                              : choice == 0
-                              ? "禁用"
-                              : "$choice分钟后",
-                          style: titleStyle,
-                        ),
-                        trailing:
-                            shutdownTimerService.scheduledExitInMinutes ==
-                                choice
-                            ? Icon(
-                                size: 20,
-                                Icons.done,
-                                color: theme.colorScheme.primary,
-                              )
-                            : null,
-                      ),
-                    ),
-                    if (!isLive) ...[
-                      Builder(
-                        builder: (context) {
-                          return ListTile(
-                            dense: true,
-                            onTap: () {
-                              shutdownTimerService.waitForPlayingCompleted =
-                                  !shutdownTimerService.waitForPlayingCompleted;
-                              (context as Element).markNeedsBuild();
-                            },
-                            title: const Text("额外等待视频播放完毕", style: titleStyle),
-                            trailing: Transform.scale(
-                              alignment: Alignment.centerRight,
-                              scale: 0.8,
-                              child: Switch(
-                                value: shutdownTimerService
-                                    .waitForPlayingCompleted,
-                                onChanged: (value) {
-                                  shutdownTimerService.waitForPlayingCompleted =
-                                      value;
-                                  (context as Element).markNeedsBuild();
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    Builder(
-                      builder: (context) {
-                        return Row(
-                          children: [
-                            const SizedBox(width: 18),
-                            const Text('倒计时结束:', style: titleStyle),
-                            const Spacer(),
-                            ActionRowLineItem(
-                              onTap: () {
-                                shutdownTimerService.exitApp = false;
-                                (context as Element).markNeedsBuild();
-                              },
-                              text: " 暂停视频 ",
-                              selectStatus: !shutdownTimerService.exitApp,
-                            ),
-                            const Spacer(),
-                            ActionRowLineItem(
-                              onTap: () {
-                                shutdownTimerService.exitApp = true;
-                                (context as Element).markNeedsBuild();
-                              },
-                              text: " 退出APP ",
-                              selectStatus: shutdownTimerService.exitApp,
-                            ),
-                            const SizedBox(width: 25),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   static Future<void> pushDynFromId({
     String? id,
     Object? rid,
     bool off = false,
+    Object? type,
   }) async {
     assert(id != null || rid != null);
     SmartDialog.showLoading();
@@ -325,7 +141,7 @@ abstract final class PageUtils {
         );
       }
     } else {
-      res.toast();
+      SmartDialog.showToast('${type != null ? 'type: $type ' : ''}$res');
     }
   }
 
@@ -404,6 +220,10 @@ abstract final class PageUtils {
           },
         );
       } else {
+        if (item.linkFolded) {
+          pushDynFromId(id: item.idStr);
+          return;
+        }
         toDupNamed(
           '/dynamicDetail',
           arguments: {
@@ -575,26 +395,17 @@ abstract final class PageUtils {
     List<SourceModel> imgList,
     int index,
   ) {
-    final animController = AnimationController(
-      vsync: state,
-      duration: Duration.zero,
-      reverseDuration: Duration.zero,
-    )..forward();
     state.showBottomSheet(
       constraints: const BoxConstraints(),
-      (context) {
-        return InteractiveviewerGallery(
-          sources: imgList,
-          initIndex: index,
-          quality: GlobalData().imgQuality,
-          onClose: animController.dispose,
-        );
-      },
+      (context) => GalleryViewer(
+        sources: imgList,
+        initIndex: index,
+        quality: GlobalData().imgQuality,
+      ),
       enableDrag: false,
       elevation: 0.0,
       backgroundColor: Colors.transparent,
-      transitionAnimationController: animController,
-      sheetAnimationStyle: const AnimationStyle(duration: Duration.zero),
+      sheetAnimationStyle: AnimationStyle.noAnimation,
     );
   }
 
@@ -726,7 +537,7 @@ abstract final class PageUtils {
     if (off) {
       Get.offNamed('/liveRoom', arguments: roomId);
     } else {
-      Get.toNamed('/liveRoom', arguments: roomId);
+      PageUtils.toDupNamed('/liveRoom', arguments: roomId);
     }
   }
 
@@ -779,6 +590,7 @@ abstract final class PageUtils {
     bool isPgc = true,
     int? progress, // milliseconds
     int? aid,
+    bool off = false,
   }) {
     RegExpMatch? match = _pgcRegex.firstMatch(uri);
     if (match != null) {
@@ -789,12 +601,14 @@ abstract final class PageUtils {
           seasonId: isSeason ? id : null,
           epId: isSeason ? null : id,
           progress: progress,
+          off: off,
         );
       } else {
         viewPugv(
           seasonId: isSeason ? id : null,
           epId: isSeason ? null : id,
           aid: aid,
+          off: off,
         );
       }
       return true;
@@ -822,6 +636,7 @@ abstract final class PageUtils {
     dynamic seasonId,
     dynamic epId,
     int? progress, // milliseconds
+    bool off = false,
   }) async {
     try {
       SmartDialog.showLoading(msg: '资源获取中');
@@ -846,6 +661,7 @@ abstract final class PageUtils {
               'pgcApi': true,
               'pgcItem': response,
             },
+            off: off,
           );
         }
 
@@ -894,6 +710,7 @@ abstract final class PageUtils {
             extraArguments: {
               'pgcItem': response,
             },
+            off: off,
           );
           return;
         } else {
@@ -919,6 +736,7 @@ abstract final class PageUtils {
     dynamic seasonId,
     dynamic epId,
     int? aid,
+    bool off = false,
   }) async {
     try {
       SmartDialog.showLoading(msg: '资源获取中');
@@ -946,6 +764,7 @@ abstract final class PageUtils {
             extraArguments: {
               'pgcItem': response,
             },
+            off: off,
           );
         } else {
           SmartDialog.showToast('资源加载失败');

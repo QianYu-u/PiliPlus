@@ -1,3 +1,5 @@
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart'
+    show ExtendedListView;
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/grpc/bilibili/app/im/v1.pb.dart'
     show IMSettingType, Setting;
@@ -25,10 +27,15 @@ class WhisperSettingsPage extends StatefulWidget {
 }
 
 class _WhisperSettingsPageState extends State<WhisperSettingsPage> {
-  late final WhisperSettingsController _controller = Get.put(
-    WhisperSettingsController(imSettingType: widget.imSettingType),
-    tag: widget.imSettingType.name,
-  );
+  late final WhisperSettingsController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      WhisperSettingsController(imSettingType: widget.imSettingType),
+      tag: widget.imSettingType.name,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +167,7 @@ class _WhisperSettingsPageState extends State<WhisperSettingsPage> {
       Success<PbMap<int, Setting>>(:final response) => Builder(
         builder: (context) {
           final keys = response.keys.toList()..sort();
-          return ListView.separated(
+          return ExtendedListView.separated(
             padding: EdgeInsets.only(
               bottom: MediaQuery.viewPaddingOf(context).bottom + 100,
             ),

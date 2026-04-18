@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/dial_prefix.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/radio_widget.dart';
 import 'package:PiliPlus/http/init.dart';
@@ -39,7 +39,7 @@ class LoginPageController extends GetxController
   late final RxInt qrCodeLeftTime = 180.obs;
   late final RxString statusQRCode = ''.obs;
 
-  late var selectedCountryCodeId = Constants.internationalDialingPrefix.first;
+  late var selectedCountryCodeId = Login.dialPrefix.first;
   late String captchaKey = '';
   late final RxInt smsSendCooldown = 0.obs;
   late int smsSendTimestamp = 0;
@@ -313,9 +313,6 @@ class LoginPageController extends GetxController
       }
       if (data['status'] == 2) {
         SmartDialog.showToast(data['message']);
-        if (Platform.isLinux) {
-          return;
-        }
         // return;
         //{"code":0,"message":"0","ttl":1,"data":{"status":2,"message":"本次登录环境存在风险, 需使用手机号进行验证或绑定","url":"https://passport.bilibili.com/h5-app/passport/risk/verify?tmp_token=9e785433940891dfa78f033fb7928181&request_id=e5a6d6480df04097870be56c6e60f7ef&source=risk","token_info":null,"cookie_info":null,"sso":null,"is_new":false,"is_tourist":false}}
         String url = data['url']!;
@@ -520,7 +517,7 @@ class LoginPageController extends GetxController
         case 0:
           // login success
           break;
-        case -105 when (!Platform.isLinux):
+        case -105:
           String captureUrl = res['data']['url'];
           Uri captureUri = Uri.parse(captureUrl);
           captchaData.token = captureUri.queryParameters['recaptcha_token']!;
@@ -740,116 +737,118 @@ class LoginPageController extends GetxController
     bool quickSelect = selectAccount.every((e) => e == selectAccount.first);
     return showDialog(
       context: context,
-      builder: (context) => Builder(
-        builder: (context) => AlertDialog(
-          title: Row(
-            crossAxisAlignment: .start,
-            mainAxisAlignment: .spaceBetween,
-            children: [
-              Text.rich(
-                style: const TextStyle(height: 1.5),
-                TextSpan(
-                  children: [
-                    const TextSpan(text: '账号切换'),
-                    TextSpan(
-                      text: '\nmid 为0时使用匿名',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: ColorScheme.of(context).outline,
-                      ),
+      builder: (context) => AlertDialog(
+        title: Row(
+          crossAxisAlignment: .start,
+          mainAxisAlignment: .spaceBetween,
+          children: [
+            Text.rich(
+              style: const TextStyle(height: 1.5),
+              TextSpan(
+                children: [
+                  const TextSpan(text: '账号切换'),
+                  TextSpan(
+                    text: '\nmid 为0时使用匿名',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: ColorScheme.of(context).outline,
                     ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  quickSelect = !quickSelect;
-                  (context as Element).markNeedsBuild();
-                },
-                child: const Text('切换'),
-              ),
-            ],
-          ),
-          titlePadding: const .only(left: 22, top: 16, right: 22, bottom: 3),
-          contentPadding: const .symmetric(vertical: 5),
-          actionsPadding: const .only(left: 16, right: 16, bottom: 10),
-          content: SingleChildScrollView(
-            child: AnimatedSize(
-              curve: Curves.easeIn,
-              alignment: .topCenter,
-              duration: const Duration(milliseconds: 200),
-              child: quickSelect
-                  ? Builder(
-                      builder: (context) => RadioGroup<Account>(
-                        groupValue: selectAccount[0],
-                        onChanged: (v) {
-                          for (int i = 0; i < selectAccount.length; i++) {
-                            selectAccount[i] = v!;
-                          }
-                          (context as Element).markNeedsBuild();
-                        },
-                        child: Column(
-                          crossAxisAlignment: .start,
-                          children: options.entries
-                              .map(
-                                (entry) => RadioWidget<Account>(
-                                  value: entry.key,
-                                  title: entry.value,
-                                  mainAxisSize: .max,
-                                  padding: const .only(left: 12),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                    )
-                  : Column(
-                      crossAxisAlignment: .start,
-                      children: AccountType.values
-                          .map(
-                            (e) => Builder(
-                              builder: (context) => RadioGroup<Account>(
-                                groupValue: selectAccount[e.index],
-                                onChanged: (v) {
-                                  selectAccount[e.index] = v!;
-                                  (context as Element).markNeedsBuild();
-                                },
-                                child: WrapRadioOptionsGroup<Account>(
-                                  groupTitle: e.title,
-                                  options: options,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: Get.back,
-              child: Text(
-                '取消',
-                style: TextStyle(color: ColorScheme.of(context).outline),
+                  ),
+                ],
               ),
             ),
             TextButton(
+              style: TextButton.styleFrom(
+                visualDensity: .compact,
+                tapTargetSize: .shrinkWrap,
+              ),
               onPressed: () {
-                Get.back();
-                for (final type in AccountType.values) {
-                  final index = type.index;
-                  final account = quickSelect
-                      ? selectAccount.first
-                      : selectAccount[index];
-                  if (account != Accounts.accountMode[index]) {
-                    Accounts.set(type, account);
-                  }
-                }
+                quickSelect = !quickSelect;
+                (context as Element).markNeedsBuild();
               },
-              child: const Text('确定'),
+              child: const Text('切换'),
             ),
           ],
         ),
+        titlePadding: const .only(left: 22, top: 16, right: 22, bottom: 3),
+        contentPadding: const .symmetric(vertical: 5),
+        actionsPadding: const .only(left: 16, right: 16, bottom: 10),
+        content: SingleChildScrollView(
+          child: AnimatedSize(
+            curve: Curves.easeIn,
+            alignment: .topCenter,
+            duration: const Duration(milliseconds: 200),
+            child: quickSelect
+                ? Builder(
+                    builder: (context) => RadioGroup<Account>(
+                      groupValue: selectAccount[0],
+                      onChanged: (v) {
+                        selectAccount.fillRange(0, selectAccount.length, v);
+                        (context as Element).markNeedsBuild();
+                      },
+                      child: Column(
+                        crossAxisAlignment: .start,
+                        children: options.entries
+                            .map(
+                              (entry) => RadioWidget<Account>(
+                                value: entry.key,
+                                title: entry.value,
+                                mainAxisSize: .max,
+                                padding: PlatformUtils.isDesktop
+                                    ? const .only(left: 12)
+                                    : const .only(left: 12, top: 2, bottom: 2),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: .start,
+                    children: AccountType.values
+                        .map(
+                          (e) => Builder(
+                            builder: (context) => RadioGroup<Account>(
+                              groupValue: selectAccount[e.index],
+                              onChanged: (v) {
+                                selectAccount[e.index] = v!;
+                                (context as Element).markNeedsBuild();
+                              },
+                              child: WrapRadioOptionsGroup<Account>(
+                                groupTitle: e.title,
+                                options: options,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Get.back,
+            child: Text(
+              '取消',
+              style: TextStyle(color: ColorScheme.of(context).outline),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              for (final type in AccountType.values) {
+                final index = type.index;
+                final account = quickSelect
+                    ? selectAccount.first
+                    : selectAccount[index];
+                if (account != Accounts.accountMode[index]) {
+                  Accounts.set(type, account);
+                }
+              }
+            },
+            child: const Text('确定'),
+          ),
+        ],
       ),
     );
   }

@@ -57,7 +57,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
       } else {
         _plDanmakuController.queryDanmaku(
           PlDanmakuController.calcSegment(
-            playerController.position.value.inMilliseconds,
+            playerController.position.inMilliseconds,
           ),
         );
       }
@@ -79,11 +79,13 @@ class _PlDanmakuState extends State<PlDanmaku> {
   }
 
   // 播放器状态监听
-  void playerListener(PlayerStatus? status) {
-    if (status == PlayerStatus.playing) {
-      _controller?.resume();
-    } else {
-      _controller?.pause();
+  void playerListener(PlayerStatus status) {
+    if (_controller case final controller?) {
+      if (status.isPlaying) {
+        controller.resume();
+      } else {
+        controller.pause();
+      }
     }
   }
 
@@ -97,7 +99,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
       return;
     }
 
-    if (!playerController.playerStatus.playing) {
+    if (!playerController.playerStatus.isPlaying) {
       return;
     }
 
@@ -123,7 +125,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
                 extra: VideoDanmaku(
                   id: e.id.toInt(),
                   mid: e.midHash,
-                  like: e.like.toInt(),
+                  like: e.likeCount.toInt(),
                 ),
               ),
             );
@@ -144,7 +146,7 @@ class _PlDanmakuState extends State<PlDanmaku> {
               extra: VideoDanmaku(
                 id: e.id.toInt(),
                 mid: e.midHash,
-                like: e.like.toInt(),
+                like: e.likeCount.toInt(),
               ),
             ),
           );

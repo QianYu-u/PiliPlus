@@ -1,14 +1,14 @@
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/models/common/enum_with_label.dart';
 import 'package:PiliPlus/pages/setting/widgets/normal_item.dart';
+import 'package:PiliPlus/pages/setting/widgets/popup_item.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/switch_item.dart';
 import 'package:PiliPlus/utils/storage.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide PopupMenuItemSelected;
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 @immutable
 sealed class SettingsModel {
@@ -28,6 +28,81 @@ sealed class SettingsModel {
     this.contentPadding,
     this.titleStyle,
   });
+}
+
+class SplitModel extends SettingsModel {
+  const SplitModel({
+    super.contentPadding,
+    super.titleStyle,
+    required this.normalModel,
+    required this.switchModel,
+  });
+
+  @override
+  String? get effectiveSubtitle => normalModel.effectiveSubtitle;
+
+  @override
+  String get effectiveTitle => normalModel.effectiveTitle;
+
+  @override
+  String? get title => normalModel.title;
+
+  final NormalModel normalModel;
+
+  final SwitchModel switchModel;
+
+  @override
+  Widget get widget => SetSwitchItem(
+    title: effectiveTitle,
+    subtitle: effectiveSubtitle,
+    setKey: switchModel.setKey,
+    defaultVal: switchModel.defaultVal,
+    onChanged: switchModel.onChanged,
+    needReboot: switchModel.needReboot,
+    leading: normalModel.leading,
+    onTap: switchModel.onTap,
+    contentPadding: contentPadding,
+    titleStyle: titleStyle,
+    isSplit: true,
+  );
+}
+
+class PopupModel<T extends EnumWithLabel> extends SettingsModel {
+  const PopupModel({
+    required this.title,
+    super.leading,
+    super.contentPadding,
+    super.titleStyle,
+    required this.value,
+    required this.items,
+    required this.onSelected,
+  });
+
+  @override
+  String? get effectiveSubtitle => null;
+
+  @override
+  String get effectiveTitle => title;
+
+  @override
+  final String title;
+
+  final ValueGetter<T> value;
+  final List<T> items;
+  final PopupMenuItemSelected<T> onSelected;
+
+  @override
+  Widget get widget => PopupListTile<T>(
+    safeArea: false,
+    leading: leading,
+    title: Text(title),
+    value: () {
+      final v = value();
+      return (v, v.label);
+    },
+    itemBuilder: (_) => enumItemBuilder(items),
+    onSelected: onSelected,
+  );
 }
 
 class NormalModel extends SettingsModel {
@@ -50,6 +125,18 @@ class NormalModel extends SettingsModel {
     this.onTap,
   }) : assert(title != null || getTitle != null);
 
+  const NormalModel.split({
+    super.subtitle,
+    super.leading,
+    super.contentPadding,
+    super.titleStyle,
+    this.title,
+    this.getTitle,
+    this.getSubtitle,
+    this.getTrailing,
+  }) : onTap = null,
+       assert(title != null || getTitle != null);
+
   @override
   String get effectiveTitle => title ?? getTitle!();
   @override
@@ -71,7 +158,7 @@ class NormalModel extends SettingsModel {
 
 class SwitchModel extends SettingsModel {
   @override
-  final String title;
+  final String? title;
   final String setKey;
   final bool defaultVal;
   final ValueChanged<bool>? onChanged;
@@ -83,7 +170,7 @@ class SwitchModel extends SettingsModel {
     super.leading,
     super.contentPadding,
     super.titleStyle,
-    required this.title,
+    required String this.title,
     required this.setKey,
     this.defaultVal = false,
     this.onChanged,
@@ -91,14 +178,22 @@ class SwitchModel extends SettingsModel {
     this.onTap,
   });
 
+  const SwitchModel.split({
+    required this.setKey,
+    this.defaultVal = false,
+    this.needReboot = false,
+    this.onChanged,
+    this.onTap,
+  }) : title = null;
+
   @override
-  String get effectiveTitle => title;
+  String get effectiveTitle => title!;
   @override
   String? get effectiveSubtitle => subtitle;
 
   @override
   Widget get widget => SetSwitchItem(
-    title: title,
+    title: title!,
     subtitle: subtitle,
     setKey: setKey,
     defaultVal: defaultVal,
@@ -126,7 +221,7 @@ SettingsModel getBanWordModel({
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          constraints: StyleString.dialogFixedConstraints,
+          constraints: Style.dialogFixedConstraints,
           title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -200,9 +295,7 @@ SettingsModel getVideoFilterSelectModel({
               (values
                     ..addIf(!values.contains(value), value)
                     ..sort())
-                  .map(
-                    (e) => (e, suffix == null ? e.toString() : '$e $suffix'),
-                  )
+                  .map((e) => (e, suffix == null ? e.toString() : '$e $suffix'))
                   .toList()
                 ..add((-1, '自定义')),
         ),
@@ -247,68 +340,10 @@ SettingsModel getVideoFilterSelectModel({
         if (result != -1) {
           value = result!;
           setState();
-          onChanged?.call(result!);
-          GStorage.setting.put(key, result);
+          onChanged?.call(value);
+          GStorage.setting.put(key, value);
         }
       }
     },
-  );
-}
-
-SettingsModel getPopupMenuModel({
-  required String title,
-  Widget? leading,
-  String? subtitle,
-  required String key,
-  required List<EnumWithLabel> values,
-  int defaultIndex = 0,
-}) {
-  // final globalKey = GlobalKey<PopupMenuButtonState<EnumWithLabel>>();
-  return NormalModel(
-    title: title,
-    subtitle: subtitle,
-    leading: leading,
-    // onTap: (context, setState) => globalKey.currentState?.showButtonMenu(),
-    getTrailing: (theme) => Builder(
-      builder: (context) {
-        final color = theme.colorScheme.secondary;
-        final v = values[GStorage.setting.get(key, defaultValue: defaultIndex)];
-        return PopupMenuButton(
-          // key: globalKey,
-          padding: .zero,
-          initialValue: v,
-          onSelected: (value) async {
-            await GStorage.setting.put(key, value.index);
-            if (context.mounted) {
-              (context as Element).markNeedsBuild();
-            }
-          },
-          itemBuilder: (context) => values
-              .map((i) => PopupMenuItem(value: i, child: Text(i.label)))
-              .toList(),
-          child: Padding(
-            padding: const .symmetric(vertical: 8),
-            child: Text.rich(
-              style: TextStyle(fontSize: 14, height: 1, color: color),
-              strutStyle: const StrutStyle(leading: 0, height: 1, fontSize: 14),
-              TextSpan(
-                children: [
-                  TextSpan(text: v.label),
-                  WidgetSpan(
-                    alignment: .middle,
-                    child: Icon(
-                      size: 14,
-                      MdiIcons.unfoldMoreHorizontal,
-                      color: color,
-                    ),
-                  ),
-                ],
-                style: TextStyle(color: color),
-              ),
-            ),
-          ),
-        );
-      },
-    ),
   );
 }

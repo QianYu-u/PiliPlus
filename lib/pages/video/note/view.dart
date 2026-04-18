@@ -1,5 +1,6 @@
 import 'package:PiliPlus/common/skeleton/video_reply.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -38,10 +39,16 @@ class NoteListPage extends CommonSlidePage {
 
 class _NoteListPageState extends State<NoteListPage>
     with SingleTickerProviderStateMixin, CommonSlideMixin {
-  late final _controller = Get.put(
-    NoteListPageCtr(oid: widget.oid),
-    tag: widget.heroTag,
-  );
+  late final NoteListPageCtr _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      NoteListPageCtr(oid: widget.oid),
+      tag: widget.heroTag,
+    );
+  }
 
   @override
   void dispose() {
@@ -103,7 +110,7 @@ class _NoteListPageState extends State<NoteListPage>
   Widget buildList(ThemeData theme) {
     Widget child = refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         key: _key,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [

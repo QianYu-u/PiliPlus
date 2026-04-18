@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/space/space_cheese/item.dart';
@@ -24,17 +25,23 @@ class MemberCheese extends StatefulWidget {
 
 class _MemberCheeseState extends State<MemberCheese>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final _controller = Get.put(
-    MemberCheeseController(widget.mid),
-    tag: widget.heroTag,
-  );
+  late final MemberCheeseController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      MemberCheeseController(widget.mid),
+      tag: widget.heroTag,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(

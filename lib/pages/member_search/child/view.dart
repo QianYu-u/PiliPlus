@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/video_card/video_card_h.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -36,7 +37,7 @@ class _MemberSearchChildPageState extends State<MemberSearchChildPage>
     super.build(context);
     return refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         controller: _controller.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -71,53 +72,43 @@ class _MemberSearchChildPageState extends State<MemberSearchChildPage>
       Loading() => _buildLoading,
       Success(:final response) =>
         response != null && response.isNotEmpty
-            ? Builder(
-                builder: (context) {
-                  return switch (widget.searchType) {
-                    MemberSearchType.archive => SliverGrid.builder(
-                      gridDelegate: gridDelegate,
-                      itemBuilder: (context, index) {
-                        if (index == response.length - 1) {
-                          _controller.onLoadMore();
-                        }
-                        return VideoCardH(
-                          videoItem: response[index],
-                        );
-                      },
-                      itemCount: response.length,
-                    ),
-                    MemberSearchType.dynamic =>
-                      GlobalData().dynamicsWaterfallFlow
-                          ? SliverWaterfallFlow(
-                              gridDelegate: dynGridDelegate,
-                              delegate: SliverChildBuilderDelegate(
-                                (_, index) {
-                                  if (index == response.length - 1) {
-                                    _controller.onLoadMore();
-                                  }
-                                  return DynamicPanel(
-                                    item: response[index],
-                                    maxWidth: maxWidth,
-                                  );
-                                },
-                                childCount: response.length,
-                              ),
-                            )
-                          : SliverList.builder(
-                              itemBuilder: (context, index) {
-                                if (index == response.length - 1) {
-                                  _controller.onLoadMore();
-                                }
-                                return DynamicPanel(
-                                  item: response[index],
-                                  maxWidth: maxWidth,
-                                );
-                              },
-                              itemCount: response.length,
-                            ),
-                  };
-                },
-              )
+            ? switch (widget.searchType) {
+                MemberSearchType.archive => SliverGrid.builder(
+                  gridDelegate: gridDelegate,
+                  itemBuilder: (context, index) {
+                    if (index == response.length - 1) {
+                      _controller.onLoadMore();
+                    }
+                    return VideoCardH(
+                      videoItem: response[index],
+                    );
+                  },
+                  itemCount: response.length,
+                ),
+                MemberSearchType.dynamic =>
+                  GlobalData().dynamicsWaterfallFlow
+                      ? SliverWaterfallFlow(
+                          gridDelegate: dynGridDelegate,
+                          delegate: SliverChildBuilderDelegate(
+                            (_, index) {
+                              if (index == response.length - 1) {
+                                _controller.onLoadMore();
+                              }
+                              return DynamicPanel(item: response[index]);
+                            },
+                            childCount: response.length,
+                          ),
+                        )
+                      : SliverList.builder(
+                          itemBuilder: (context, index) {
+                            if (index == response.length - 1) {
+                              _controller.onLoadMore();
+                            }
+                            return DynamicPanel(item: response[index]);
+                          },
+                          itemCount: response.length,
+                        ),
+              }
             : HttpError(onReload: _controller.onReload),
       Error(:final errMsg) => HttpError(
         errMsg: errMsg,

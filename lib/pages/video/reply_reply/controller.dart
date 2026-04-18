@@ -6,7 +6,6 @@ import 'package:PiliPlus/pages/common/publish/publish_route.dart';
 import 'package:PiliPlus/pages/common/reply_controller.dart';
 import 'package:PiliPlus/pages/video/reply_new/view.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
-import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:fixnum/fixnum.dart';
@@ -156,9 +155,8 @@ class VideoReplyReplyController extends ReplyController
 
   @override
   void onReply(
-    BuildContext context, {
+    ReplyInfo? replyItem, {
     int? oid,
-    ReplyInfo? replyItem,
     int? replyType,
     int? index,
   }) {
@@ -173,7 +171,7 @@ class VideoReplyReplyController extends ReplyController
     final root = replyItem.id.toInt();
     final key = oid + root;
 
-    Navigator.of(context)
+    Get.key.currentState!
         .push(
           PublishRoute(
             pageBuilder: (buildContext, animation, secondaryAnimation) {
@@ -196,10 +194,9 @@ class VideoReplyReplyController extends ReplyController
             },
           ),
         )
-        .then((res) {
-          if (res != null) {
+        .then((replyInfo) {
+          if (replyInfo is ReplyInfo) {
             savedReplies.remove(key);
-            ReplyInfo replyInfo = RequestUtils.replyCast(res);
 
             count.value += 1;
             loadingState

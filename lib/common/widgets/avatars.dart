@@ -5,15 +5,17 @@ import 'package:flutter/material.dart';
 Widget avatars({
   required ColorScheme colorScheme,
   required Iterable<Owner> users,
+  double gap = 6.0,
 }) {
-  const gap = 6.0;
   const size = 22.0;
-  const offset = size - gap;
+  const padding = 0.8;
+  final offset = size - gap;
+  const imgSize = size - 2 * padding;
   if (users.length == 1) {
     return NetworkImgLayer(
       src: users.first.face,
-      width: size,
-      height: size,
+      width: imgSize,
+      height: imgSize,
       type: .avatar,
     );
   } else {
@@ -36,11 +38,11 @@ Widget avatars({
                 child: DecoratedBox(
                   decoration: decoration,
                   child: Padding(
-                    padding: const .all(.8),
+                    padding: const .all(padding),
                     child: NetworkImgLayer(
                       src: e.$2.face,
-                      width: size - .8,
-                      height: size - .8,
+                      width: imgSize,
+                      height: imgSize,
                       type: .avatar,
                     ),
                   ),

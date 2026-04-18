@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:ffi';
 
+import 'package:PiliPlus/http/browser_ua.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -13,10 +14,9 @@ import 'package:media_kit/ffi/src/utf8.dart';
 import 'package:media_kit/generated/libmpv/bindings.dart' as generated;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit/src/player/native/core/initializer.dart';
-import 'package:media_kit/src/player/native/core/native_library.dart';
 
 class MpvConvertWebp {
-  final _mpv = generated.MPV(DynamicLibrary.open(NativeLibrary.path));
+  final _mpv = NativePlayer.mpv;
   late final Pointer<generated.mpv_handle> _ctx;
   final _completer = Completer<bool>();
 
@@ -41,7 +41,7 @@ class MpvConvertWebp {
   Future<void> _init() async {
     final enableHA = Pref.enableHA;
     _ctx = await Initializer.create(
-      NativeLibrary.path,
+      _mpv,
       _onEvent,
       options: {
         'o': outFile,
@@ -58,13 +58,10 @@ class MpvConvertWebp {
       },
     );
     NativePlayer.setHeader(
-      const {
-        'user-agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
-        'referer': HttpString.baseUrl,
-      },
       _mpv,
       _ctx,
+      userAgent: BrowserUa.pc,
+      referer: HttpString.baseUrl,
     );
     if (progress != null) {
       _observeProperty('time-pos');
@@ -86,7 +83,7 @@ class MpvConvertWebp {
     return _completer.future;
   }
 
-  Future<void> _onEvent(Pointer<generated.mpv_event> event) async {
+  Future<void>? _onEvent(Pointer<generated.mpv_event> event) {
     switch (event.ref.event_id) {
       case generated.mpv_event_id.MPV_EVENT_PROPERTY_CHANGE:
         final prop = event.ref.data.cast<generated.mpv_event_property>().ref;
@@ -105,7 +102,7 @@ class MpvConvertWebp {
         final text = log.text.toDartString().trim();
         debugPrint('WebpConvert: $level $prefix : $text');
         if (kDebugMode) {
-          _success = level != 'error' && level != 'fatal';
+          if (level == 'error' || level == 'fatal') _success = false;
         } else {
           _success = false;
         }
@@ -117,11 +114,12 @@ class MpvConvertWebp {
         dispose();
         break;
     }
+    return null;
   }
 
   void _command(List<String> args) {
     final pointers = args.map((e) => e.toNativeUtf8()).toList();
-    final arr = calloc<Pointer<Uint8>>(128);
+    final arr = calloc<Pointer<Uint8>>(pointers.length + 1);
     for (int i = 0; i < args.length; i++) {
       arr[i] = pointers[i];
     }
@@ -152,7 +150,7 @@ enum WebpPreset {
   photo('photo', '照片', '户外摄影，自然光环境'),
   drawing('drawing', '绘图', '手绘或线稿，高对比度细节'),
   icon('icon', '图标', '小型彩色图像'),
-  text('text', '文本', '文字类')
+  text('text', '文本', '文字类'),
   ;
 
   final String flag;

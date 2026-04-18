@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/later_view_type.dart';
@@ -27,18 +28,24 @@ class LaterViewChildPage extends StatefulWidget {
 
 class _LaterViewChildPageState extends State<LaterViewChildPage>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final LaterController _laterController = Get.put(
-    LaterController(widget.laterViewType),
-    tag: widget.laterViewType.type.toString(),
-  );
+  late final LaterController _laterController;
   late final _baseCtr = Get.putOrFind(LaterBaseController.new);
+
+  @override
+  void initState() {
+    super.initState();
+    _laterController = Get.put(
+      LaterController(widget.laterViewType),
+      tag: widget.laterViewType.type.toString(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return refreshIndicator(
       onRefresh: _laterController.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         controller: _laterController.scrollController,
         slivers: [

@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -27,10 +28,16 @@ class SeasonSeriesPage extends StatefulWidget {
 
 class _SeasonSeriesPageState extends State<SeasonSeriesPage>
     with AutomaticKeepAliveClientMixin, GridMixin {
-  late final _controller = Get.put(
-    SeasonSeriesController(widget.mid),
-    tag: widget.heroTag,
-  );
+  late final SeasonSeriesController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      SeasonSeriesController(widget.mid),
+      tag: widget.heroTag,
+    );
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -38,7 +45,7 @@ class _SeasonSeriesPageState extends State<SeasonSeriesPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return CustomScrollView(
+    return customScrollView(
       slivers: [
         SliverPadding(
           padding: EdgeInsets.only(

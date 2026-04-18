@@ -5,8 +5,8 @@ import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart'
     show touchSlopH;
-import 'package:PiliPlus/common/widgets/image/custom_grid_view.dart'
-    show CustomGridView, ImageModel;
+import 'package:PiliPlus/common/widgets/image_grid/image_grid_view.dart'
+    show ImageGridView, ImageModel;
 import 'package:PiliPlus/common/widgets/pendant_avatar.dart';
 import 'package:PiliPlus/grpc/reply.dart';
 import 'package:PiliPlus/http/fav.dart';
@@ -24,7 +24,7 @@ import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
-import 'package:PiliPlus/pages/setting/widgets/slide_dialog.dart';
+import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/reply_item_grpc.dart';
 import 'package:PiliPlus/plugin/pl_player/controller.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
@@ -32,6 +32,7 @@ import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/feed_back.dart';
+import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -42,7 +43,7 @@ import 'package:PiliPlus/utils/update.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide RefreshIndicator;
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -75,36 +76,46 @@ List<SettingsModel> get extraSettings => [
       onTap: _showDownPathDialog,
     ),
   ],
-  SwitchModel(
-    title: '空降助手',
-    subtitle: '点击配置',
-    setKey: SettingBoxKey.enableSponsorBlock,
-    defaultVal: false,
-    onTap: (context) => Get.toNamed('/sponsorBlock'),
-    leading: const Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        Icon(Icons.shield_outlined),
-        Icon(Icons.play_arrow_rounded, size: 15),
-      ],
+  SplitModel(
+    normalModel: const NormalModel.split(
+      title: '空降助手',
+      subtitle: '点击配置',
+      leading: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Icon(Icons.shield_outlined),
+          Icon(Icons.play_arrow_rounded, size: 15),
+        ],
+      ),
+    ),
+    switchModel: SwitchModel.split(
+      defaultVal: false,
+      setKey: SettingBoxKey.enableSponsorBlock,
+      onTap: (context) => Get.toNamed('/sponsorBlock'),
     ),
   ),
-  getPopupMenuModel(
+  PopupModel<SkipType>(
     title: '番剧片头/片尾跳过类型',
     leading: const Icon(MdiIcons.debugStepOver),
-    key: SettingBoxKey.pgcSkipType,
-    values: SkipType.values,
-    defaultIndex: SkipType.skipOnce.index,
+    value: () => Pref.pgcSkipType,
+    items: SkipType.values,
+    onSelected: (value, setState) => GStorage.setting
+        .put(SettingBoxKey.pgcSkipType, value.index)
+        .whenComplete(setState),
   ),
-  SwitchModel(
-    title: '检查未读动态',
-    subtitle: '点击设置检查周期(min)',
-    leading: const Icon(Icons.notifications_none),
-    setKey: SettingBoxKey.checkDynamic,
-    defaultVal: true,
-    onChanged: (value) => Get.find<MainController>().checkDynamic = value,
-    onTap: _showDynDialog,
+  SplitModel(
+    normalModel: const NormalModel.split(
+      title: '检查未读动态',
+      subtitle: '点击设置检查周期(min)',
+      leading: Icon(Icons.notifications_none),
+    ),
+    switchModel: SwitchModel.split(
+      defaultVal: true,
+      setKey: SettingBoxKey.checkDynamic,
+      onChanged: (value) => Get.find<MainController>().checkDynamic = value,
+      onTap: _showDynDialog,
+    ),
   ),
   SwitchModel(
     title: '显示视频分段信息',
@@ -162,7 +173,7 @@ List<SettingsModel> get extraSettings => [
     leading: const Icon(Icons.photo_outlined),
     setKey: SettingBoxKey.horizontalPreview,
     defaultVal: false,
-    onChanged: (value) => CustomGridView.horizontalPreview = value,
+    onChanged: (value) => ImageGridView.horizontalPreview = value,
   ),
   NormalModel(
     title: '评论折叠行数',
@@ -301,7 +312,7 @@ List<SettingsModel> get extraSettings => [
     title: '超分辨率',
     leading: const Icon(Icons.stay_current_landscape_outlined),
     getSubtitle: () =>
-        '当前:「${Pref.superResolutionType.title}」\n默认设置对番剧生效, 其他视频默认关闭\n超分辨率需要启用硬件解码, 若启用硬件解码后仍然不生效, 尝试切换硬件解码器为 auto-copy',
+        '当前:「${Pref.superResolutionType.label}」\n默认设置对番剧生效, 其他视频默认关闭\n超分辨率需要启用硬件解码, 若启用硬件解码后仍然不生效, 尝试切换硬件解码器为 auto-copy',
     onTap: _showSuperResolutionDialog,
   ),
   const SwitchModel(
@@ -333,9 +344,16 @@ List<SettingsModel> get extraSettings => [
   SwitchModel(
     title: '展示头像/评论/动态装饰',
     leading: const Icon(MdiIcons.stickerCircleOutline),
-    setKey: SettingBoxKey.showDynDecorate,
+    setKey: SettingBoxKey.showDecorate,
     defaultVal: true,
-    onChanged: (value) => PendantAvatar.showDynDecorate = value,
+    onChanged: (value) => PendantAvatar.showDecorate = value,
+  ),
+  SwitchModel(
+    title: '显示粉丝勋章',
+    leading: const Icon(MdiIcons.medalOutline),
+    setKey: SettingBoxKey.showMedal,
+    defaultVal: true,
+    onChanged: (value) => GlobalData().showMedal = value,
   ),
   SwitchModel(
     title: '预览 Live Photo',
@@ -357,6 +375,13 @@ List<SettingsModel> get extraSettings => [
     leading: Icon(Icons.show_chart),
     setKey: SettingBoxKey.showDmChart,
     defaultVal: false,
+  ),
+  const SwitchModel(
+    title: '记录评论',
+    leading: Icon(Icons.message_outlined),
+    setKey: SettingBoxKey.saveReply,
+    defaultVal: true,
+    needReboot: true,
   ),
   const SwitchModel(
     title: '发评反诈',
@@ -472,7 +497,7 @@ List<SettingsModel> get extraSettings => [
     leading: const Icon(Icons.menu),
     setKey: SettingBoxKey.enableImgMenu,
     defaultVal: false,
-    onChanged: (value) => CustomGridView.enableImgMenu = value,
+    onChanged: (value) => ImageGridView.enableImgMenu = value,
   ),
   SwitchModel(
     setKey: SettingBoxKey.feedBackEnable,
@@ -604,12 +629,17 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     onChanged: (value) => MemberTabType.showMemberShop = value,
   ),
-  const SwitchModel(
-    leading: Icon(Icons.airplane_ticket_outlined),
-    title: '设置代理',
-    subtitle: '设置代理 host:port',
-    setKey: SettingBoxKey.enableSystemProxy,
-    onTap: _showProxyDialog,
+  const SplitModel(
+    normalModel: NormalModel.split(
+      title: '设置代理',
+      subtitle: '设置代理 host:port',
+      leading: Icon(Icons.airplane_ticket_outlined),
+    ),
+    switchModel: SwitchModel.split(
+      defaultVal: false,
+      setKey: SettingBoxKey.enableSystemProxy,
+      onTap: _showProxyDialog,
+    ),
   ),
   const SwitchModel(
     title: '自动清除缓存',
@@ -767,7 +797,7 @@ void _showDownPathDialog(BuildContext context, VoidCallback setState) {
           ListTile(
             onTap: () async {
               Get.back();
-              final path = await FilePicker.platform.getDirectoryPath();
+              final path = await FilePicker.getDirectoryPath();
               if (path == null || path == downloadPath) return;
               downloadPath = path;
               setState();
@@ -956,7 +986,7 @@ Future<void> _showRefreshDragDialog(
 ) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: '刷新滑动距离',
       min: 0.1,
       max: 0.5,
@@ -969,7 +999,6 @@ Future<void> _showRefreshDragDialog(
   if (res != null) {
     kDragContainerExtentPercentage = res;
     await GStorage.setting.put(SettingBoxKey.refreshDragPercentage, res);
-    Get.forceAppUpdate();
     setState();
   }
 }
@@ -980,7 +1009,7 @@ Future<void> _showRefreshDialog(
 ) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: '刷新指示器高度',
       min: 10.0,
       max: 100.0,
@@ -991,8 +1020,19 @@ Future<void> _showRefreshDialog(
   if (res != null) {
     displacement = res;
     await GStorage.setting.put(SettingBoxKey.refreshDisplacement, res);
-    Get.forceAppUpdate();
+    if (WidgetsBinding.instance.rootElement case final context?) {
+      context.visitChildElements(_visitor);
+    }
     setState();
+  }
+}
+
+void _visitor(Element context) {
+  if (!context.mounted) return;
+  if (context.widget is RefreshIndicator) {
+    context.markNeedsBuild();
+  } else {
+    context.visitChildren(_visitor);
   }
 }
 
@@ -1005,7 +1045,7 @@ Future<void> _showSuperResolutionDialog(
     builder: (context) => SelectDialog<SuperResolutionType>(
       title: '超分辨率',
       value: Pref.superResolutionType,
-      values: SuperResolutionType.values.map((e) => (e, e.title)).toList(),
+      values: SuperResolutionType.values.map((e) => (e, e.label)).toList(),
     ),
   );
   if (res != null) {
@@ -1069,7 +1109,7 @@ Future<void> _showReplyCountDialog(
 ) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: '连接重试次数',
       min: 0,
       max: 8,
@@ -1091,7 +1131,7 @@ Future<void> _showReplyDelayDialog(
 ) async {
   final res = await showDialog<double>(
     context: context,
-    builder: (context) => SlideDialog(
+    builder: (context) => SliderDialog(
       title: '连接重试间隔',
       min: 0,
       max: 1000,
@@ -1117,7 +1157,7 @@ Future<void> _showReplySortDialog(
     builder: (context) => SelectDialog<ReplySortType>(
       title: '评论展示',
       value: Pref.replySortType,
-      values: ReplySortType.values.map((e) => (e, e.title)).toList(),
+      values: ReplySortType.values.take(2).map((e) => (e, e.title)).toList(),
     ),
   );
   if (res != null) {

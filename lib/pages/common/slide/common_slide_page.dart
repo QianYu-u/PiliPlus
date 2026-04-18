@@ -1,9 +1,10 @@
 import 'dart:math' show max;
 
+import 'package:PiliPlus/common/widgets/flutter/layout_builder.dart';
 import 'package:PiliPlus/common/widgets/gesture/horizontal_drag_gesture_recognizer.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter/gestures.dart' show HorizontalDragGestureRecognizer;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide LayoutBuilder;
 import 'package:get/get.dart';
 
 abstract class CommonSlidePage extends StatefulWidget {
@@ -23,6 +24,13 @@ mixin CommonSlideMixin<T extends CommonSlidePage> on State<T>, TickerProvider {
   SlideDragGestureRecognizer? _slideDragGestureRecognizer;
 
   static bool slideDismissReplyPage = Pref.slideDismissReplyPage;
+
+  bool isDxAllowed(double dx) {
+    return enableSlide
+        ? dx > CommonSlideMixin.offset &&
+              dx < maxWidth - CommonSlideMixin.offset
+        : true;
+  }
 
   @override
   void initState() {

@@ -1,6 +1,8 @@
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/assets.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/models/common/badge_type.dart';
@@ -16,6 +18,7 @@ import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/page.dart';
 import 'package:PiliPlus/services/download/download_service.dart';
+import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/duration_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
@@ -69,13 +72,15 @@ class _DownloadPanelState extends State<DownloadPanel> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _listController.jumpToItem(
-        index: widget.index,
-        scrollController: widget.scrollController,
-        alignment: 0,
-      );
-    });
+    if (widget.index != -1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _listController.jumpToItem(
+          index: widget.index,
+          scrollController: widget.scrollController,
+          alignment: 0,
+        );
+      });
+    }
   }
 
   @override
@@ -171,7 +176,7 @@ class _DownloadPanelState extends State<DownloadPanel> {
     return Expanded(
       child: Material(
         type: MaterialType.transparency,
-        child: CustomScrollView(
+        child: customScrollView(
           controller: widget.scrollController,
           slivers: [
             SliverPadding(
@@ -251,7 +256,7 @@ class _DownloadPanelState extends State<DownloadPanel> {
       return false;
     }
 
-    if (kReleaseMode && episode.badge == '会员') {
+    if (kReleaseMode && episode.badge == '会员' && Accounts.mainEqVideo) {
       if (vipStatus != 1) {
         if (!isDownloadAll) {
           SmartDialog.showToast('需要大会员');
@@ -396,7 +401,7 @@ class _DownloadPanelState extends State<DownloadPanel> {
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: StyleString.safeSpace,
+                    horizontal: Style.safeSpace,
                     vertical: 5,
                   ),
                   child: Row(
@@ -441,7 +446,7 @@ class _DownloadPanelState extends State<DownloadPanel> {
                         )
                       else if (isCurrentIndex)
                         Image.asset(
-                          'assets/images/live.png',
+                          Assets.livingStatic,
                           color: primary,
                           height: 12,
                           cacheHeight: 12.cacheSize(context),
@@ -541,7 +546,7 @@ class _DownloadPanelState extends State<DownloadPanel> {
             onTap: () {
               showConfirmDialog(
                 context: context,
-                title: '确定缓存全部？',
+                title: const Text('确定缓存全部？'),
                 onConfirm: () {
                   for (int i = 0; i < widget.episodes.length; i++) {
                     _onDownload(

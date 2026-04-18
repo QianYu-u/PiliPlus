@@ -1,6 +1,7 @@
-import 'package:PiliPlus/common/constants.dart';
 import 'package:PiliPlus/common/skeleton/video_card_v.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/self_sized_horizontal_list.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -17,10 +18,12 @@ class LiveAreaChildPage extends StatefulWidget {
     super.key,
     required this.areaId,
     required this.parentAreaId,
+    required this.showFirstFrame,
   });
 
   final dynamic areaId;
   final dynamic parentAreaId;
+  final bool showFirstFrame;
 
   @override
   State<LiveAreaChildPage> createState() => _LiveAreaChildPageState();
@@ -28,10 +31,16 @@ class LiveAreaChildPage extends StatefulWidget {
 
 class _LiveAreaChildPageState extends State<LiveAreaChildPage>
     with AutomaticKeepAliveClientMixin {
-  late final _controller = Get.put(
-    LiveAreaChildController(widget.areaId, widget.parentAreaId),
-    tag: '${widget.areaId}${widget.parentAreaId}',
-  );
+  late final LiveAreaChildController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      LiveAreaChildController(widget.areaId, widget.parentAreaId),
+      tag: '${widget.areaId}${widget.parentAreaId}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +48,15 @@ class _LiveAreaChildPageState extends State<LiveAreaChildPage>
     final ThemeData theme = Theme.of(context);
     return refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         controller: _controller.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.only(
-              left: StyleString.safeSpace,
-              right: StyleString.safeSpace,
-              top: StyleString.safeSpace,
+              left: Style.safeSpace,
+              right: Style.safeSpace,
+              top: Style.safeSpace,
               bottom: MediaQuery.viewPaddingOf(context).bottom + 100,
             ),
             sliver: Obx(
@@ -60,10 +69,10 @@ class _LiveAreaChildPageState extends State<LiveAreaChildPage>
   }
 
   late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
-    mainAxisSpacing: StyleString.cardSpace,
-    crossAxisSpacing: StyleString.cardSpace,
+    mainAxisSpacing: Style.cardSpace,
+    crossAxisSpacing: Style.cardSpace,
     maxCrossAxisExtent: Grid.smallCardWidth,
-    childAspectRatio: StyleString.aspectRatio,
+    childAspectRatio: Style.aspectRatio,
     mainAxisExtent: MediaQuery.textScalerOf(context).scale(90),
   );
 
@@ -114,7 +123,10 @@ class _LiveAreaChildPageState extends State<LiveAreaChildPage>
                     if (index == response.length - 1) {
                       _controller.onLoadMore();
                     }
-                    return LiveCardVApp(item: response[index]);
+                    return LiveCardVApp(
+                      item: response[index],
+                      showFirstFrame: widget.showFirstFrame,
+                    );
                   },
                   itemCount: response.length,
                 )

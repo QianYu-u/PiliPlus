@@ -1,7 +1,10 @@
-import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
+import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart'
+    show m3eLoading;
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/fav/fav_topic/topic_item.dart';
 import 'package:PiliPlus/pages/fav/topic/controller.dart';
@@ -31,15 +34,15 @@ class _FavTopicPageState extends State<FavTopicPage>
     final ThemeData theme = Theme.of(context);
     return refreshIndicator(
       onRefresh: _controller.onRefresh,
-      child: CustomScrollView(
+      child: customScrollView(
         controller: _controller.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.only(
-              left: StyleString.safeSpace,
-              right: StyleString.safeSpace,
-              top: StyleString.safeSpace,
+              left: Style.safeSpace,
+              right: Style.safeSpace,
+              top: Style.safeSpace,
               bottom: MediaQuery.viewPaddingOf(context).bottom + 100,
             ),
             sliver: Obx(
@@ -66,9 +69,7 @@ class _FavTopicPageState extends State<FavTopicPage>
       Loading() => const SliverToBoxAdapter(
         child: SizedBox(
           height: 125,
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: m3eLoading,
         ),
       ),
       Success(:final response) =>
@@ -83,7 +84,7 @@ class _FavTopicPageState extends State<FavTopicPage>
 
                   void onLongPress() => showConfirmDialog(
                     context: context,
-                    title: '确定取消收藏？',
+                    title: const Text('确定取消收藏？'),
                     onConfirm: () => _controller.onRemove(index, item.id!),
                   );
 

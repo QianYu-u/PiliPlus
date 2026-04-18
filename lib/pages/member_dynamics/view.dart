@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
@@ -61,7 +62,7 @@ class _MemberDynamicsPageState extends State<MemberDynamicsPage>
 
   Widget _buildBody(EdgeInsets padding) => refreshIndicator(
     onRefresh: _memberDynamicController.onRefresh,
-    child: CustomScrollView(
+    child: customScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
@@ -93,7 +94,6 @@ class _MemberDynamicsPageState extends State<MemberDynamicsPage>
                             item: response[index],
                             onRemove: _memberDynamicController.onRemove,
                             onSetTop: _memberDynamicController.onSetTop,
-                            maxWidth: maxWidth,
                           );
                         },
                         childCount: response.length,
@@ -108,7 +108,6 @@ class _MemberDynamicsPageState extends State<MemberDynamicsPage>
                           item: response[index],
                           onRemove: _memberDynamicController.onRemove,
                           onSetTop: _memberDynamicController.onSetTop,
-                          maxWidth: maxWidth,
                         );
                       },
                       itemCount: response.length,

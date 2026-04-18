@@ -13,7 +13,7 @@ on:
 jobs:
   build-mac-app:
     name: Release Mac
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -31,13 +31,18 @@ jobs:
         shell: pwsh
         run: lib/scripts/build.ps1
 
+      - name: Apply Patch
+        shell: pwsh
+        run: lib/scripts/patch.ps1 macOS
+        continue-on-error: true
+
       - name: Build Mac
         run: flutter build macos --release --dart-define-from-file=pili_release.json
 
       - name: Prepare Upload
         run: |
           npm install --global create-dmg
-          create-dmg build/macos/Build/Products/Release/PiliPlus.app
+          create-dmg build/macos/Build/Products/Release/PiliPlus.app || true
         continue-on-error: true
 
       - name: Rename DMG
@@ -53,7 +58,8 @@ jobs:
             PiliPlus_macos_*.dmg
 
       - name: Upload macos release
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
+          archive: false
           name: macOS-release
           path: PiliPlus_macos_*.dmg

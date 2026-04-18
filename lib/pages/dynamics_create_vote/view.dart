@@ -1,8 +1,9 @@
 import 'dart:io' show File;
 
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
-import 'package:PiliPlus/common/widgets/flutter/time_picker.dart';
+import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
+import 'package:PiliPlus/common/widgets/time_picker.dart';
 import 'package:PiliPlus/models/dynamics/vote_model.dart';
 import 'package:PiliPlus/pages/dynamics_create_vote/controller.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
@@ -26,13 +27,19 @@ class CreateVotePage extends StatefulWidget {
 }
 
 class _CreateVotePageState extends State<CreateVotePage> {
-  late final _controller = Get.put(
-    CreateVoteController(widget.voteId),
-    tag: Utils.generateRandomString(8),
-  );
+  late final CreateVoteController _controller;
   late final imagePicker = ImagePicker();
 
   late TextStyle _leadingStyle;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.put(
+      CreateVoteController(widget.voteId),
+      tag: Utils.generateRandomString(8),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +58,7 @@ class _CreateVotePageState extends State<CreateVotePage> {
       appBar: AppBar(
         title: Text('${_controller.voteId != null ? '' : '发起'}投票'),
       ),
-      body: ListView(
+      body: listView(
         padding: EdgeInsets.only(
           left: padding.left + 16,
           right: padding.right + 16,
