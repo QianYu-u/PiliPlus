@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/constants.dart';
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/selectable_text/selection_area.dart';
 import 'package:PiliPlus/common/widgets/flutter/selectable_text/text.dart';
@@ -16,6 +17,7 @@ import 'package:PiliPlus/models_new/video/video_detail/staff.dart';
 import 'package:PiliPlus/models_new/video/video_tag/data.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/search/widgets/search_text.dart';
+import 'package:PiliPlus/pages/video/ai_assistant/view.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/controller.dart';
 import 'package:PiliPlus/pages/video/introduction/ugc/widgets/action_item.dart';
@@ -92,8 +94,8 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
     final isHorizontal = !isPortrait && widget.isHorizontal;
     return SliverPadding(
       padding: const EdgeInsets.only(
-        left: StyleString.safeSpace,
-        right: StyleString.safeSpace,
+        left: Style.safeSpace,
+        right: Style.safeSpace,
         top: 10,
       ),
       sliver: Obx(
@@ -488,7 +490,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
   Widget followButton(BuildContext context, ThemeData t) {
     return Obx(
       () {
-        int attr = introController.followStatus['attribute'] ?? 0;
+        int attr = introController.followStatus.value.attribute ?? 0;
         return TextButton(
           onPressed: () => introController.actionRelationMod(context),
           style: TextButton.styleFrom(
@@ -604,6 +606,18 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                 ? NumUtils.numFormat(videoDetail.stat!.share!)
                 : null,
           ),
+          ActionItem(
+            icon: const Icon(Icons.auto_awesome),
+            onTap: () => AiAssistantPanel.show(
+              context: context,
+              bvid: introController.bvid,
+              cid: videoDetailCtr.cid.value,
+              heroTag: widget.heroTag,
+            ),
+            selectStatus: false,
+            semanticsLabel: 'AI助手',
+            text: 'AI',
+          ),
         ],
       ),
     );
@@ -672,9 +686,9 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                               if (!mounted) return;
                               final confirmed = await showConfirmDialog(
                                 context: context,
-                                title: '空降助手：搬运视频同步',
-                                content:
-                                    '${hasPortVideo ? "" : "是否将"}该视频${hasPortVideo ? "已" : ""}绑定到此YouTube视频($ytbId)',
+                                title: const Text('空降助手：搬运视频同步'),
+                                content: Text(
+                                    '${hasPortVideo ? "" : "是否将"}该视频${hasPortVideo ? "已" : ""}绑定到此YouTube视频($ytbId)'),
                               );
                               if (!hasPortVideo && confirmed) {
                                 final res = await SponsorBlock.postPortVideo(
@@ -913,10 +927,10 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             PendantAvatar(
-              avatar: userStat.card?.face,
+              userStat.card?.face,
               size: 35,
               badgeSize: 14,
-              isVip: isVip,
+              vipStatus: isVip ? 1 : 0,
               officialType: userStat.card?.official?.type,
             ),
             const SizedBox(width: 10),

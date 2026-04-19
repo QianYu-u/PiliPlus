@@ -17,11 +17,11 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 # update when release
-version: 1.1.5+1
+version: 2.0.4+1
 
 environment:
-  sdk: ">=3.10.0"
-  flutter: 3.38.6 # update `.fvmrc` config
+  sdk: ">=3.10.0 <4.0.0"
+  flutter: ">=3.30.0" # update `.fvmrc` config
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -63,8 +63,7 @@ dependencies:
 
   # 存储
   path_provider: ^2.1.5
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  hive_ce: ^2.19.3
 
   # 设备信息
   device_info_plus: ^12.1.0
@@ -80,6 +79,10 @@ dependencies:
   # 浏览器
   # webview_flutter: ^4.10.0
   flutter_inappwebview: ^6.1.5
+  desktop_webview_window:
+    git:
+      url: https://github.com/Predidit/linux_webview_window
+      ref: main
   # 解决sliver滑动不同步
   # extended_nested_scroll_view: ^6.2.1
   extended_nested_scroll_view:
@@ -98,7 +101,10 @@ dependencies:
       url: https://github.com/bggRGjQaUbCoE/material_design_icons_flutter.git
       ref: const
   # toast
-  flutter_smart_dialog: ^4.9.8+5
+  flutter_smart_dialog:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/flutter_smart_dialog.git
+      ref: main
   # 下滑关闭
   # dismissible_page: ^1.0.2
   # custom_sliding_segmented_control: ^1.8.4
@@ -124,9 +130,13 @@ dependencies:
   flutter_volume_controller: ^1.3.3
   wakelock_plus: ^1.2.8
   # universal_platform: ^1.1.0
-  auto_orientation:
+  # auto_orientation:
+  #   git:
+  #     url: https://github.com/bggRGjQaUbCoE/auto_orientation.git
+  #     ref: master
+  native_device_orientation:
     git:
-      url: https://github.com/bggRGjQaUbCoE/auto_orientation.git
+      url: https://github.com/bggRGjQaUbCoE/flutter_native_device_orientation.git
       ref: master
   protobuf: ^6.0.0
   # animations: ^2.0.11
@@ -163,6 +173,10 @@ dependencies:
   html: ^0.15.4
   # html渲染
   flutter_html: ^3.0.0-beta.2
+  # AI助手 Markdown 渲染
+  markdown: any
+  markdown_widget: any
+  flutter_math_fork: any
   # 极验
   gt3_flutter_plugin: ^0.1.0
   uuid: ^4.5.1
@@ -186,7 +200,7 @@ dependencies:
   intl: ^0.20.2
   archive: ^4.0.0
   flutter_svg: ^2.0.14
-  image_cropper: ^11.0.0
+  image_cropper: ^12.0.0
   #解压直播消息
   brotli: ^0.6.0
   expandable: ^5.0.1
@@ -218,13 +232,14 @@ dependencies:
   file_picker:
     git:
       url: https://github.com/bggRGjQaUbCoE/flutter_file_picker.git
-      ref: v10.3.10
+      ref: mod
   super_sliver_list:
     git:
       url: https://github.com/bggRGjQaUbCoE/super_sliver_list.git
       ref: mod
   dlna_dart: ^0.1.0
   battery_plus: ^7.0.0
+  material_new_shapes: ^1.0.0
 
   vector_math: any
   fixnum: any
@@ -250,34 +265,44 @@ dependency_overrides:
   rxdart: ^0.28.0
   media_kit:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: media_kit
       ref: version_1.2.5
   media_kit_video:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: media_kit_video
       ref: version_1.2.5
   media_kit_libs_video:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: libs/universal/media_kit_libs_video
       ref: version_1.2.5
   media_kit_native_event_loop:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: media_kit_native_event_loop
       ref: version_1.2.5
   media_kit_libs_android_video:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: libs/android/media_kit_libs_android_video
       ref: version_1.2.5
   media_kit_libs_windows_video:
     git:
-      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      url: https://github.com/My-Responsitories/media-kit.git
       path: libs/windows/media_kit_libs_windows_video
       ref: version_1.2.5
+  media_kit_libs_ios_video:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      path: libs/ios/media_kit_libs_ios_video
+      ref: dev
+  media_kit_libs_macos_video:
+    git:
+      url: https://github.com/bggRGjQaUbCoE/media-kit.git
+      path: libs/macos/media_kit_libs_macos_video
+      ref: dev
   font_awesome_flutter: 10.9.0
 
 dev_dependencies:
@@ -330,13 +355,17 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/
-    - assets/images/lv/
-    - assets/images/logo/
-    - assets/images/live/
-    - assets/images/video/
-    - assets/images/paycoins/
-    - assets/shaders/
+    - path: assets/images/
+    - path: assets/images/lv/
+    - path: assets/images/logo/
+    - path: assets/images/logo/ico/
+      platforms: [windows]
+    - path: assets/images/logo/desktop/
+      platforms: [linux, macos]
+    - path: assets/images/live/
+    - path: assets/images/video/
+    - path: assets/images/paycoins/
+    - path: assets/shaders/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

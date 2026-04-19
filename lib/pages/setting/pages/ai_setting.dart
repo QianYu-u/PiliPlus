@@ -247,6 +247,7 @@ class _AiSettingPageState extends State<AiSettingPage> {
               Expanded(
                 child: Obx(
                   () => DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _models.contains(_selectedModel.value)
                         ? _selectedModel.value
                         : null,
@@ -256,7 +257,14 @@ class _AiSettingPageState extends State<AiSettingPage> {
                       prefixIcon: Icon(Icons.smart_toy),
                     ),
                     items: _models
-                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                        .map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(
+                                m,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ))
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {

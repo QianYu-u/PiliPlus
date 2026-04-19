@@ -7,8 +7,6 @@ import 'dart:io' show Platform;
 
 import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
-import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart'
-    show RefreshScrollPhysics;
 import 'package:flutter/foundation.dart' show clampDouble;
 import 'package:flutter/material.dart' hide RefreshIndicator;
 
@@ -609,6 +607,48 @@ class RefreshIndicatorState extends State<RefreshIndicator>
 
 // ignore: camel_case_types
 typedef refreshIndicator = RefreshIndicator;
+
+typedef RefreshDragCallback = bool Function(
+  double offset,
+  double viewportDimension,
+);
+
+/// Keeps clamping scroll behavior while still reporting leading-edge drag
+/// distance to the custom refresh indicator.
+class RefreshScrollPhysics extends ClampingScrollPhysics {
+  const RefreshScrollPhysics({
+    required this.onDrag,
+    super.parent,
+  });
+
+  final RefreshDragCallback onDrag;
+
+  @override
+  RefreshScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return RefreshScrollPhysics(
+      onDrag: onDrag,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) => true;
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    final double overscroll = super.applyBoundaryConditions(position, value);
+    if (overscroll == 0.0) {
+      return 0.0;
+    }
+
+    final bool isPullingPastLeadingEdge =
+        value < position.pixels && position.pixels <= position.minScrollExtent;
+    if (isPullingPastLeadingEdge) {
+      onDrag(position.pixels - value, position.viewportDimension);
+    }
+    return overscroll;
+  }
+}
 
 class RefreshScrollBehavior extends CustomScrollBehavior {
   const RefreshScrollBehavior(

@@ -63,11 +63,12 @@ unlinked_spec.ds
 app.*.map.json
 
 # Android related
-**/android/**/gradle-wrapper.jar
+# (通常建议不要忽略 gradle 包装文件，以确保 CI/CD 能在无需全局安装 gradle 的情况下进行可复现构建)
+# **/android/**/gradle-wrapper.jar
 .gradle/
 **/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
+# **/android/gradlew
+# **/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
@@ -122,6 +123,12 @@ app.*.map.json
 
 # Coverage
 coverage/
+
+# Environments & Secrets
+.env
+*.env
+google-services.json
+GoogleService-Info.plist
 
 # Symbols
 app.*.symbols
