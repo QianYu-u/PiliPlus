@@ -80,16 +80,16 @@ jobs:
           cp ../assets/images/logo/logo.png usr/share/icons/hicolor/512x512/apps/piliplus.png
 
           printf "修改控制文件...\n"
-          # 替换版本�?
+          # 替换版本�?
           sed -i  "2s/version_need_change/${{ env.version }}/g" DEBIAN/control
-          # 计算安装大小并替�?
+          # 计算安装大小并替�?
           SIZE_KB=$(du -s -b --apparent-size . | awk '{print int($1)}')
           SIZE_KB=$(($SIZE_KB - $(du -s -b --apparent-size DEBIAN | awk '{print int($1)}')))
           SIZE_KB=$(echo $SIZE_KB | awk '{print int($1/1024 + 0.999)}')
           printf "\t安装大小: %s KB\n" "$SIZE_KB"
           sed -i "9s/size_need_change/${SIZE_KB}/g" DEBIAN/control
 
-          printf "生成并写�?md5sums ...\n"
+          printf "生成并写�?md5sums ...\n"
           md5sum opt/PiliPlus/piliplus >> DEBIAN/md5sums
           md5sum opt/PiliPlus/lib/* >> DEBIAN/md5sums
           md5sum opt/PiliPlus/data/icudtl.dat >> DEBIAN/md5sums
@@ -144,7 +144,7 @@ jobs:
           mkdir -p %{buildroot}/opt/PiliPlus
           cp -r bundle/* %{buildroot}/opt/PiliPlus/
 
-          # 二进制权限与命令行入�?
+          # 二进制权限与命令行入�?
           chmod 755 %{buildroot}/opt/PiliPlus/piliplus
           mkdir -p %{buildroot}/usr/bin
           ln -sf /opt/PiliPlus/piliplus %{buildroot}/usr/bin/piliplus
@@ -177,10 +177,10 @@ jobs:
 
           sed -i "s/DATE/${DATE}/g" "$RPM_BUILD_ROOT/SPECS/piliplus.spec"
 
-          printf "构建 RPM �?..\n"
+          printf "构建 RPM �?..\n"
           rpmbuild --define "_topdir $RPM_BUILD_ROOT" -bb "$RPM_BUILD_ROOT/SPECS/piliplus.spec"
 
-          printf "移动生成�?RPM...\n"
+          printf "移动生成�?RPM...\n"
           find "$RPM_BUILD_ROOT/RPMS" -name "*.rpm" -exec mv {} "PiliPlus_linux_${{ env.version }}_amd64.rpm" \;
 
           printf "完成: PiliPlus_linux_%s_amd64.rpm\n" "${{ env.version }}"
@@ -202,7 +202,7 @@ jobs:
           printf "复制应用文件...\n"
           cp -r build/linux/x64/release/bundle/* "$APPDIR/usr/bin/"
 
-          printf "复制桌面文件和图�?..\n"
+          printf "复制桌面文件和图�?..\n"
           cp assets/linux/com.example.piliplus.desktop "$APPDIR/com.example.piliplus.desktop"
           cp assets/linux/com.example.piliplus.desktop "$APPDIR/usr/share/applications/com.example.piliplus.desktop"
           cp assets/images/logo/logo.png "$APPDIR/piliplus.png"
