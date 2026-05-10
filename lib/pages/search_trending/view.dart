@@ -3,18 +3,17 @@ import 'dart:math';
 import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models_new/search/search_trending/list.dart';
 import 'package:PiliPlus/pages/search_trending/controller.dart';
+import 'package:PiliPlus/utils/color_utils.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
-import 'package:PiliPlus/utils/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ListTile;
@@ -119,7 +118,7 @@ class _SearchTrendingPageState extends State<SearchTrendingPage> {
             width: width,
             child: refreshIndicator(
               onRefresh: _controller.onRefresh,
-              child: customScrollView(
+              child: CustomScrollView(
                 controller: _controller.scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -182,7 +181,7 @@ class _SearchTrendingPageState extends State<SearchTrendingPage> {
                             '${index + 1 - _controller.topCount}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Utils.index2Color(
+                              color: ColourUtils.index2Color(
                                 index - _controller.topCount,
                                 theme.colorScheme.outline,
                               ),

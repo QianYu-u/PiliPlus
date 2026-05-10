@@ -63,7 +63,7 @@ class VideoCardHLater extends StatelessWidget {
                   return;
                 }
                 try {
-                  final int? cid =
+                  final cid =
                       videoItem.cid ??
                       await SearchHttp.ab2c(
                         aid: videoItem.aid,
@@ -158,7 +158,7 @@ class VideoCardHLater extends StatelessWidget {
                           ),
                         Positioned.fill(
                           child: selectMask(
-                            theme,
+                            theme.colorScheme,
                             videoItem.checked,
                           ),
                         ),

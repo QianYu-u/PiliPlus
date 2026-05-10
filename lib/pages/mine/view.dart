@@ -4,7 +4,6 @@ import 'package:PiliPlus/common/assets.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
@@ -15,6 +14,7 @@ import 'package:PiliPlus/pages/login/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
 import 'package:PiliPlus/pages/mine/widgets/item.dart';
+import 'package:PiliPlus/utils/bili_utils.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
@@ -79,7 +79,7 @@ class _MediaPageState extends CommonPageState<MinePage>
             child: refreshIndicator(
               onRefresh: controller.onRefresh,
               child: onBuild(
-                listView(
+                ListView(
                   padding: const .only(bottom: 100),
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
@@ -316,7 +316,7 @@ class _MediaPageState extends CommonPageState<MinePage>
                             ),
                           ),
                           Image.asset(
-                            Utils.levelName(
+                            BiliUtils.levelName(
                               levelInfo?.currentLevel ?? 0,
                               isSeniorMember: userInfo.isSeniorMember == 1,
                             ),

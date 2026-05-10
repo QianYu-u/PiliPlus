@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:PiliPlus/common/widgets/appbar/appbar.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/flutter/pop_scope.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/view_sliver_safe_area.dart';
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
@@ -104,16 +103,16 @@ class _DownloadDetailPageState extends State<DownloadDetailPage>
                   visualDensity: VisualDensity.compact,
                 ),
                 onPressed: () async {
-                  final allChecked = this.allChecked.toSet();
+                  final futures = allChecked
+                      .map(
+                        (e) => _downloadService.downloadDanmaku(
+                          entry: e,
+                          isUpdate: true,
+                        ),
+                      )
+                      .toList();
                   handleSelect();
-                  final res = await Future.wait(
-                    allChecked.map(
-                      (e) => _downloadService.downloadDanmaku(
-                        entry: e,
-                        isUpdate: true,
-                      ),
-                    ),
-                  );
+                  final res = await Future.wait(futures);
                   if (res.every((e) => e)) {
                     SmartDialog.showToast('更新成功');
                   } else {
@@ -144,7 +143,7 @@ class _DownloadDetailPageState extends State<DownloadDetailPage>
               ],
             ),
           ),
-          body: customScrollView(
+          body: CustomScrollView(
             slivers: [
               ViewSliverSafeArea(
                 sliver: Obx(() {
@@ -202,22 +201,20 @@ class _DownloadDetailPageState extends State<DownloadDetailPage>
       title: const Text('确定删除选中视频？'),
       onConfirm: () async {
         SmartDialog.showLoading();
-        final watchProgress = GStorage.watchProgress;
-        final allChecked = this.allChecked.toSet();
+        final allChecked = this.allChecked.toList();
         final isDeleteAll = allChecked.length == _downloadItems.length;
-        if (isDeleteAll) {
-          await _closeSub();
-        }
-        for (final entry in allChecked) {
-          await watchProgress.deleteAll(
+        await Future.wait([
+          if (isDeleteAll) _closeSub(),
+          GStorage.watchProgress.deleteAll(
             allChecked.map((e) => e.cid.toString()),
-          );
-          await _downloadService.deleteDownload(
-            entry: entry,
-            removeList: true,
-            refresh: false,
-          );
-        }
+          ),
+          for (final entry in allChecked)
+            _downloadService.deleteDownload(
+              entry: entry,
+              removeList: true,
+              refresh: false,
+            ),
+        ]);
         _downloadService.flagNotifier.refresh();
         if (isDeleteAll) {
           SmartDialog.dismiss();

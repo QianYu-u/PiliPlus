@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/hero.dart';
 import 'package:PiliPlus/common/widgets/marquee.dart';
@@ -26,6 +25,7 @@ import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/share_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -115,7 +115,7 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
         if (isPortrait) {
           child = Padding(
             padding: EdgeInsets.symmetric(horizontal: padding),
-            child: customScrollView(
+            child: CustomScrollView(
               controller: scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -141,7 +141,7 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
             children: [
               Expanded(
                 flex: flex,
-                child: customScrollView(
+                child: CustomScrollView(
                   controller: scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
@@ -174,7 +174,7 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
                     resizeToAvoidBottomInset: false,
                     body: refreshIndicator(
                       onRefresh: controller.onRefresh,
-                      child: customScrollView(
+                      child: CustomScrollView(
                         controller: scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
@@ -308,7 +308,8 @@ class _MusicDetailPageState extends CommonDynPageState<MusicDetailPage> {
                     child: textIconButton(
                       icon: CustomIcons.share_node,
                       text: '分享',
-                      onPressed: () => Utils.shareText(controller.shareUrl),
+                      onPressed: () =>
+                          ShareUtils.shareText(controller.shareUrl),
                     ),
                   ),
                   Expanded(

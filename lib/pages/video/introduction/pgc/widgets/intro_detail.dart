@@ -1,8 +1,7 @@
 import 'package:PiliPlus/common/widgets/flutter/page/tabs.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
-import 'package:PiliPlus/common/widgets/flutter/selectable_text/text.dart';
 import 'package:PiliPlus/common/widgets/keep_alive_wrapper.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
+import 'package:PiliPlus/common/widgets/selectable_text.dart';
 import 'package:PiliPlus/common/widgets/stat/stat.dart';
 import 'package:PiliPlus/models/common/stat_type.dart';
 import 'package:PiliPlus/models_new/pgc/pgc_info_model/result.dart';
@@ -118,7 +117,7 @@ class _IntroDetailState extends State<PgcIntroPanel>
     final TextStyle textStyle = TextStyle(
       color: theme.colorScheme.onSurfaceVariant,
     );
-    return listView(
+    return ListView(
       controller: _controller,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.only(
@@ -148,17 +147,17 @@ class _IntroDetailState extends State<PgcIntroPanel>
         ),
         const SizedBox(height: 4),
         Row(
+          spacing: 6,
           children: [
-            Text(
-              widget.item.areas!.first.name!,
-              style: smallTitle,
-            ),
-            const SizedBox(width: 6),
+            if (widget.item.areas?.isNotEmpty ?? false)
+              Text(
+                widget.item.areas!.first.name!,
+                style: smallTitle,
+              ),
             Text(
               widget.item.publish!.pubTimeShow!,
               style: smallTitle,
             ),
-            const SizedBox(width: 6),
             Text(
               widget.item.newEp!.desc!,
               style: smallTitle,

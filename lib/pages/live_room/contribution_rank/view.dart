@@ -1,5 +1,4 @@
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/loading_widget.dart';
@@ -10,6 +9,7 @@ import 'package:PiliPlus/models/common/live/live_contribution_rank_type.dart';
 import 'package:PiliPlus/models_new/live/live_contribution_rank/item.dart';
 import 'package:PiliPlus/pages/live_room/contribution_rank/controller.dart';
 import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
+import 'package:PiliPlus/utils/color_utils.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -132,7 +132,7 @@ class _ContributionRankTypeState extends State<_ContributionRankType>
       type: .transparency,
       child: refreshIndicator(
         onRefresh: _controller.onRefresh,
-        child: customScrollView(
+        child: CustomScrollView(
           controller: _controller.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -229,7 +229,7 @@ class _Item extends StatelessWidget {
                   textScaler: .noScaling,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Utils.index2Color(index, colorScheme.outline),
+                    color: ColourUtils.index2Color(index, colorScheme.outline),
                     fontSize: 16,
                     fontStyle: FontStyle.italic,
                   ),

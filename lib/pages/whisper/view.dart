@@ -1,6 +1,5 @@
 import 'package:PiliPlus/common/skeleton/whisper_item.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/grpc/bilibili/app/im/v1.pb.dart';
 import 'package:PiliPlus/http/loading_state.dart';
@@ -8,7 +7,7 @@ import 'package:PiliPlus/pages/whisper/controller.dart';
 import 'package:PiliPlus/pages/whisper/widgets/item.dart';
 import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/extension/three_dot_ext.dart';
-import 'package:PiliPlus/utils/utils.dart';
+import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -38,7 +37,7 @@ class _WhisperPageState extends State<WhisperPage> {
               '/webview',
               parameters: {
                 'url':
-                    'https://www.bilibili.com/h5/follow/newFans?navhide=1&${Utils.themeUrl(theme.colorScheme.isDark)}',
+                    'https://www.bilibili.com/h5/follow/newFans?navhide=1&${ThemeUtils.themeUrl(theme.isDark)}',
               },
             ),
             icon: const Icon(Icons.account_circle_outlined),
@@ -95,7 +94,7 @@ class _WhisperPageState extends State<WhisperPage> {
       ),
       body: refreshIndicator(
         onRefresh: _controller.onRefresh,
-        child: customScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             _buildTopItems(theme, padding),

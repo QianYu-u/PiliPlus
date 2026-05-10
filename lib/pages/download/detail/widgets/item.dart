@@ -126,6 +126,7 @@ class DetailItem extends StatelessWidget {
               cid: cid!,
               cover: entry.cover,
               title: entry.showTitle,
+              isVertical: entry.pageData?.isVertical ?? false,
               extraArguments: {
                 'sourceType': SourceType.file,
                 'entry': entry,
@@ -274,7 +275,10 @@ class DetailItem extends StatelessWidget {
                       type: PBadgeType.gray,
                     ),
                   Positioned.fill(
-                    child: selectMask(theme, checked ?? entry.checked),
+                    child: selectMask(
+                      theme.colorScheme,
+                      checked ?? entry.checked,
+                    ),
                   ),
                 ],
               ),

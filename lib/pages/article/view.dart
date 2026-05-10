@@ -22,6 +22,7 @@ import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
+import 'package:PiliPlus/utils/share_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +66,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
   /// 提取文章内容并显示 AI 助手
   void _showAiAssistant(BuildContext context) {
     String content = '';
-    
+
     // 从 articleData 提取 HTML 内容
     if (controller.articleData?.content != null) {
       content = stripHtml(controller.articleData!.content!);
@@ -99,12 +100,12 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
       }
       content = buffer.toString().trim();
     }
-    
+
     if (content.isEmpty) {
       SmartDialog.showToast('无法提取文章内容');
       return;
     }
-    
+
     AiAssistantPanel.showForOpus(
       context: context,
       heroTag: 'article_${controller.id}',
@@ -121,13 +122,12 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
       appBar: _buildAppBar(),
       body: Padding(
         padding: EdgeInsets.only(left: padding.left, right: padding.right),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            _buildPage(theme),
-            _buildBottom(theme),
-          ],
-        ),
+        child: _buildPage(theme),
+      ),
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      floatingActionButton: SlideTransition(
+        position: fabAnimation,
+        child: _buildBottom(theme),
       ),
     );
   }
@@ -224,6 +224,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
             // if (kDebugMode) debugPrint('json page');
             content = OpusContent(
               opus: controller.opus!,
+              images: controller.images,
               maxWidth: maxWidth,
             );
           } else if (controller.opusData?.modules.moduleBlocked != null) {
@@ -483,7 +484,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
         icon: const Icon(Icons.more_vert, size: 19),
         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
           PopupMenuItem(
-            onTap: () => Utils.shareText(controller.url),
+            onTap: () => ShareUtils.shareText(controller.url),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -692,6 +693,14 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                           icon: Icons.auto_awesome,
                           stat: null,
                           onPressed: () => _showAiAssistant(context),
+                        ),
+                      ),
+                      Expanded(
+                        child: textIconButton(
+                          text: '分享',
+                          icon: CustomIcons.share_node,
+                          stat: null,
+                          onPressed: () => ShareUtils.shareText(controller.url),
                         ),
                       ),
                       Expanded(

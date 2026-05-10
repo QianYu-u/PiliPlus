@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:PiliPlus/common/skeleton/msg_feed_top.dart';
 import 'package:PiliPlus/common/widgets/button/more_btn.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
-import 'package:PiliPlus/common/widgets/flutter/scroll_view/scroll_view.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/follow_order_type.dart';
@@ -39,15 +38,38 @@ class FollowChildPage extends StatefulWidget {
 
 class _FollowChildPageState extends State<FollowChildPage>
     with AutomaticKeepAliveClientMixin {
-  late final FollowChildController _followController;
+  late String _tag;
+  late FollowChildController _followController;
+
+  String get _newTag =>
+      '${widget.tag ?? Utils.generateRandomString(8)}${widget.tagid}';
 
   @override
   void initState() {
     super.initState();
+    _initController();
+  }
+
+  void _initController() {
+    _tag = _newTag;
     _followController = Get.put(
       FollowChildController(widget.controller, widget.mid, widget.tagid),
-      tag: '${widget.tag ?? Utils.generateRandomString(8)}${widget.tagid}',
+      tag: _tag,
     );
+  }
+
+  @override
+  void didUpdateWidget(FollowChildPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tagid != widget.tagid) {
+      final newTag = _newTag;
+      if (Get.isRegistered<FollowChildController>(tag: newTag)) {
+        _followController = Get.find<FollowChildController>(tag: newTag);
+      } else {
+        Get.delete<FollowChildController>(tag: _tag);
+        _initController();
+      }
+    }
   }
 
   @override
@@ -59,7 +81,7 @@ class _FollowChildPageState extends State<FollowChildPage>
       padding: EdgeInsets.only(left: padding.left, right: padding.right),
       child: refreshIndicator(
         onRefresh: _followController.onRefresh,
-        child: customScrollView(
+        child: CustomScrollView(
           controller: _followController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
